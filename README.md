@@ -190,13 +190,3 @@ run.bat                One-click start
 
 Everything is in the [Doc](Doc/README.md) folder: high-level and low-level design, architecture, network and data-flow
 diagrams, the database design, server requirements, the user acceptance test (UAT) form, and the code review report.
-
----
-
-## Notes
-
-- This code was recovered from the application's compiled build, then reviewed line by line, with its bugs and security
-  gaps fixed. Details are in the [Code Review Report](Doc/12-Code-Review-Report.md).
-- Before going live: enable HTTPS, use the `sgs_app` account instead of root, and run the application as a permanent
-  service.
-- This repository is private and carries the SGS identity. Do not make it public.
