@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGS Forms — اعتماد شركة الطيران</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="Themes.css?v=9">
+
+<style>
+body{ overflow-x:hidden; }
+
+.form-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:14px; flex-wrap:wrap; margin-bottom:18px;
+}
+.form-head .pg-title{ min-width:0; }
+@media(max-width:560px){ .form-head{ flex-direction:column; align-items:flex-start; } .form-head .pg-title{ font-size:19px; } }
+
+.dir-chip{ display:inline-flex; align-items:center; gap:7px; padding:6px 14px; border-radius:30px; font-size:13px; font-weight:800; }
+.dir-arr{ background:var(--gl); color:var(--g); }
+.dir-dep{ background:var(--bluel); color:var(--blue); }
+.dir-both{ background:var(--goldl); color:#9a7d2e; }
+
+/* بطاقة قسم قابلة للطي */
+.sec{ margin-bottom:14px; }
+.sec > .card-head{ cursor:pointer; user-select:none; }
+.sec-ico{ width:30px; height:30px; border-radius:9px; flex-shrink:0; background:var(--gl); color:var(--g); display:flex; align-items:center; justify-content:center; }
+.sec-ico.blue{ background:var(--bluel); color:var(--blue); }
+.sec-ico.gold{ background:var(--goldl); color:#9a7d2e; }
+.sec-htext{ display:flex; align-items:center; gap:10px; }
+.sec-chev{ transition:transform .25s; color:var(--mu); }
+.sec.collapsed .sec-chev{ transform:rotate(-90deg); }
+.sec-body{ padding:18px; }
+.sec.collapsed .sec-body{ display:none; }
+
+/* مراجعة (للقراءة فقط) — تسمية + قيمة */
+.review-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px 18px; }
+.rv{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.rv-l{ font-size:11px; font-weight:700; color:var(--mu); }
+.rv-v{ font-size:14px; font-weight:700; color:var(--tx); word-break:break-word; }
+.rv-v.mono{ font-family:'DM Mono',monospace; }
+.rv-v.empty{ color:var(--mu2); font-weight:500; }
+.rv.col-all{ grid-column:1 / -1; }
+
+/* صناديق إجمالي مصغّرة للعرض */
+.mini-total{ display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:10px; font-weight:800; font-family:'DM Mono',monospace; }
+.mini-total.green{ background:var(--gl); color:var(--g); }
+.mini-total.blue{ background:var(--bluel); color:var(--blue); }
+
+/* ── قسم رضا شركة الطيران (محسّن) ── */
+.sat-body{ display:flex; flex-direction:column; gap:18px; }
+.sat-panel{
+  background:linear-gradient(135deg,#FCFAF1,#FFFDF8);
+  border:1.5px solid #EFE6C7; border-radius:16px; padding:18px 20px;
+}
+.sat-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+.sat-q{ font-size:13.5px; font-weight:800; color:var(--tx); }
+.sat-q span{ color:var(--red); }
+.sat-hint{ font-size:11.5px; color:var(--mu); margin-top:4px; }
+.rate-badge{ display:none; align-items:center; gap:6px; padding:7px 16px; border-radius:30px; font-size:13px; font-weight:800; transition:all .2s; }
+.rate-badge.show{ display:inline-flex; }
+
+.rate{ display:flex; align-items:center; gap:10px; direction:ltr; }
+.star{ cursor:pointer; color:#E4DBBC; background:none; border:none; padding:0; line-height:0; transition:transform .12s ease, color .12s; }
+.star svg{ width:40px; height:40px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.07)); }
+.star:hover{ transform:scale(1.14); }
+.star.on{ color:var(--gold); }
+@media(max-width:520px){ .star svg{ width:33px; height:33px; } }
+
+/* ملاحظات أنيقة */
+.remark-label{ display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:800; color:var(--tx); margin-bottom:10px; }
+.remark-label svg{ color:var(--g); }
+.remark-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:11px; }
+.chip{
+  padding:6px 13px; border-radius:20px; border:1.5px solid var(--bd); background:var(--w);
+  color:var(--mu); cursor:pointer; font-family:'Tajawal',sans-serif; font-size:11.5px; font-weight:600;
+  display:inline-flex; align-items:center; gap:5px; transition:all .15s;
+}
+.chip::before{ content:'+'; font-weight:800; opacity:.7; }
+.chip:hover{ border-color:var(--g); background:var(--gl); color:var(--g); }
+.remark-input{ position:relative; }
+.remark-input textarea{
+  width:100%; padding:13px 15px 28px; border:1.5px solid var(--bd); border-radius:14px;
+  font-size:13.5px; font-family:'Tajawal',sans-serif; color:var(--tx); background:var(--w);
+  outline:none; resize:vertical; min-height:104px; line-height:1.75;
+  transition:border-color .2s, box-shadow .2s;
+}
+.remark-input textarea:focus{ border-color:var(--g); box-shadow:0 0 0 3px rgba(0,108,78,.1); }
+.remark-count{ position:absolute; inset-inline-end:13px; bottom:9px; font-size:10.5px; font-family:'DM Mono',monospace; color:var(--mu2); pointer-events:none; }
+
+/* لوحة التوقيع */
+.sign-wrap{ position:relative; }
+.sign-pad{
+  width:100%; height:200px; display:block;
+  background:repeating-linear-gradient(180deg,#fff,#fff 38px,#F4F6F9 38px,#F4F6F9 39px), #fff;
+  border:1.5px dashed var(--bd); border-radius:12px;
+  touch-action:none; cursor:crosshair;
+}
+.sign-pad.signed{ border-style:solid; border-color:var(--g); }
+.sign-hint{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:var(--mu2); font-size:13px; font-weight:600; pointer-events:none;
+}
+.sign-hint.hide{ display:none; }
+.sign-bar{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; gap:10px; flex-wrap:wrap; }
+.sign-meta{ font-size:11px; color:var(--mu); }
+
+/* شريط الإجراءات السفلي */
+.action-bar{
+  position:sticky; bottom:0; z-index:50;
+  margin:18px -28px -24px; padding:14px 28px;
+  background:rgba(255,255,255,.92); backdrop-filter:blur(8px);
+  border-top:1px solid var(--bd);
+  display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+}
+.action-bar .ab-info{ font-size:11.5px; color:var(--mu); display:flex; align-items:center; gap:7px; }
+.action-bar .ab-btns{ display:flex; gap:10px; flex-wrap:wrap; }
+.btn-return{
+  display:inline-flex; align-items:center; gap:7px; padding:8px 18px; border-radius:10px;
+  border:1.5px solid var(--orange); background:var(--orangel); color:var(--orange);
+  cursor:pointer; font-family:'Tajawal',sans-serif; font-size:13px; font-weight:700; transition:all .15s;
+}
+.btn-return:hover{ background:var(--orange); color:#fff; }
+@media(max-width:768px){ .action-bar{ margin:18px 0 0; padding:12px 0; } .action-bar .ab-btns{ flex:1; } .action-bar .ab-btns .btn-primary,.action-bar .ab-btns .btn-return{ flex:1; justify-content:center; } }
+@media(max-width:560px){ .action-bar .ab-info{ display:none; } }
+
+/* Toast */
+#toast{ position:fixed; inset-inline-end:20px; bottom:90px; z-index:1100; background:var(--tx); color:#fff; padding:13px 18px; border-radius:12px; font-size:13px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.25); display:flex; align-items:center; gap:9px; transform:translateY(160%); opacity:0; transition:all .3s cubic-bezier(.34,1.56,.64,1); }
+#toast.show{ transform:translateY(0); opacity:1; }
+</style>
+</head>
+
+<body>
+<main class="main">
+
+  <!-- رأس الصفحة -->
+  <div class="form-head">
+    <div>
+      <div class="pg-title" id="t-title">مراجعة واعتماد التقرير</div>
+      <div class="pg-sub"><span class="dot"></span><span id="t-sub">مراجعة بيانات المناولة واعتمادها بالتوقيع</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span class="dir-chip dir-both" id="flight-chip">—</span>
+      <button class="btn-icon" onclick="exportPdf()" id="pdf-btn">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"/></svg>
+        <span id="pdf-l">تصدير PDF</span>
+      </button>
+      <a class="btn-icon" href="main.html" id="t-back">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="t-back-l">رجوع</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- تنبيه -->
+  <div class="alt alt-er" id="err-alert">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <span id="err-txt"></span>
+  </div>
+
+  <!-- بانر سبب الإرجاع (يظهر فقط للتقارير المُعادة) -->
+  <div id="return-banner" style="display:none;background:#FEF2F2;border:1.5px solid #FECACA;border-radius:14px;padding:16px 18px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:8px;color:#B91C1C;font-weight:800;font-size:14px;margin-bottom:10px;">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h11a5 5 0 0 1 5 5 5 5 0 0 1-5 5H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="rb-title">تقرير مُعاد</span>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:#9B1C1C;margin-bottom:4px;" id="rb-l-reason">سبب الإرجاع</div>
+    <div style="font-size:14px;color:#7F1D1D;font-weight:600;white-space:pre-wrap;line-height:1.6;background:#fff;border:1px solid #FECACA;border-radius:10px;padding:10px 12px;" id="rb-reason">—</div>
+    <div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:#9B1C1C;">
+      <div><span style="font-weight:700;" id="rb-l-by">أُعيد بواسطة:</span> <span id="rb-by">—</span></div>
+      <div><span style="font-weight:700;" id="rb-l-date">التاريخ:</span> <span id="rb-date">—</span></div>
+    </div>
+  </div>
+
+  <!-- ════ مراجعة: معلومات عامة ════ -->
+  <div class="sec card" data-sec>
+    <div class="card-head" onclick="toggleSec(this)">
+      <div class="sec-htext">
+        <span class="sec-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="currentColor"/></svg></span>
+        <div class="card-title" id="s-general">معلومات عامة</div>
+      </div>
+      <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="sec-body"><div class="review-grid" id="rv-general"></div></div>
+  </div>
+
+  <!-- ════ مراجعة: الوصول ════ -->
+  <div class="sec card" data-sec>
+    <div class="card-head" onclick="toggleSec(this)">
+      <div class="sec-htext">
+        <span class="sec-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M19 19H5M12 4v9m0 0l4-4m-4 4L8 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <div class="card-title" id="s-arr">بيانات الوصول</div>
+      </div>
+      <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="sec-body"><div class="review-grid" id="rv-arr"></div></div>
+  </div>
+
+  <!-- ════ مراجعة: المغادرة — الركاب ════ -->
+  <div class="sec card" data-sec>
+    <div class="card-head" onclick="toggleSec(this)">
+      <div class="sec-htext">
+        <span class="sec-ico blue"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M3 21v-1a6 6 0 0 1 12 0v1M17 11h4m-2-2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+        <div class="card-title" id="s-pax">المغادرة — الركاب</div>
+      </div>
+      <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="sec-body"><div class="review-grid" id="rv-pax"></div></div>
+  </div>
+
+  <!-- ════ مراجعة: المغادرة — الحقائب ════ -->
+  <div class="sec card" data-sec>
+    <div class="card-head" onclick="toggleSec(this)">
+      <div class="sec-htext">
+        <span class="sec-ico blue"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2"/></svg></span>
+        <div class="card-title" id="s-bag">المغادرة — الحقائب</div>
+      </div>
+      <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="sec-body"><div class="review-grid" id="rv-bag"></div></div>
+  </div>
+
+  <!-- ════ مراجعة: الصعود ════ -->
+  <div class="sec card" data-sec>
+    <div class="card-head" onclick="toggleSec(this)">
+      <div class="sec-htext">
+        <span class="sec-ico blue"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M3 19h18M5 19V9l7-5 7 5v10M9 19v-5h6v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <div class="card-title" id="s-board">معلومات الصعود (Boarding)</div>
+      </div>
+      <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="sec-body"><div class="review-grid" id="rv-board"></div></div>
+  </div>
+
+  <!-- ════ مراجعة: التأخيرات (مغادرة فقط — تُخفى للوصول) ════ -->
+  <div class="sec card" data-sec>
+    <div class="card-head" onclick="toggleSec(this)">
+      <div class="sec-htext">
+        <span class="sec-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+        <div class="card-title" id="s-extra">التأخيرات</div>
+      </div>
+      <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="sec-body">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th id="c-code">الكود</th><th id="c-reason">السبب</th><th id="c-dur">المدة (دقيقة)</th></tr></thead>
+          <tbody id="rv-delays"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ مراجعة: ملاحظات المشرف ════ -->
+  <div class="sec card" data-sec>
+    <div class="card-head" onclick="toggleSec(this)">
+      <div class="sec-htext">
+        <span class="sec-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M4 5h16M4 10h16M4 15h10M4 20h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+        <div class="card-title" id="s-sup-remarks">ملاحظات المشرف</div>
+      </div>
+      <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="sec-body"><div class="rv-v" id="rv-sup-remarks">—</div></div>
+  </div>
+
+  <!-- ════ تقييم ورضا شركة الطيران ════ -->
+  <div class="sec card" data-sec>
+    <div class="card-head" onclick="toggleSec(this)">
+      <div class="sec-htext">
+        <span class="sec-ico gold"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.8 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" fill="currentColor"/></svg></span>
+        <div class="card-title" id="s-rate">تقييم رضا شركة الطيران</div>
+      </div>
+      <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="sec-body sat-body">
+      <!-- التقييم -->
+      <div class="sat-panel">
+        <div class="sat-top">
+          <div>
+            <div class="sat-q" id="l-rate">مستوى الرضا عن الخدمة <span>*</span></div>
+            <div class="sat-hint" id="sat-hint">اضغط على النجوم لتقييم جودة الخدمة المقدّمة</div>
+          </div>
+          <div class="rate-badge" id="rate-badge"></div>
+        </div>
+        <div class="rate" id="rate"></div>
+      </div>
+
+      <!-- الملاحظات -->
+      <div>
+        <div class="remark-label" id="l-airline-remarks">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          <span>ملاحظات شركة الطيران</span>
+        </div>
+        <div class="remark-chips" id="remark-chips"></div>
+        <div class="remark-input">
+          <textarea id="f-airline-remarks" rows="4" maxlength="500" placeholder="اكتب ملاحظاتك حول جودة المناولة، الالتزام بالوقت، أو أي ملاحظات أخرى…" oninput="updateCount()"></textarea>
+          <span class="remark-count" id="remark-count">0 / 500</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ بيانات الموظف + التوقيع ════ -->
+  <div class="sec card" data-sec>
+    <div class="card-head" onclick="toggleSec(this)">
+      <div class="sec-htext">
+        <span class="sec-ico gold"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+        <div class="card-title" id="s-sign">اعتماد وتوقيع موظف شركة الطيران</div>
+      </div>
+      <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="sec-body">
+      <div class="review-grid" style="margin-bottom:16px;">
+        <div class="field" style="margin:0;"><label id="l-rep-name">اسم الموظف <span>*</span></label><input type="text" id="f-rep-name" placeholder="..."></div>
+        <div class="field" style="margin:0;"><label id="l-rep-airline">شركة الطيران <span>*</span></label><input type="text" id="f-rep-airline" placeholder="..."></div>
+        <div class="field" style="margin:0;"><label id="l-rep-pos">الوظيفة / الرقم الوظيفي</label><input type="text" id="f-rep-pos" placeholder="..."></div>
+      </div>
+
+      <label class="field" id="l-sign" style="display:block;font-size:12px;font-weight:600;color:var(--tx);margin-bottom:6px;">التوقيع <span style="color:var(--red)">*</span></label>
+      <div class="sign-wrap">
+        <canvas id="sign-pad" class="sign-pad"></canvas>
+        <div class="sign-hint" id="sign-hint">وقّع هنا بإصبعك أو القلم</div>
+      </div>
+      <div class="sign-bar">
+        <span class="sign-meta" id="sign-meta">التوقيع يُلتقط كصورة مع التاريخ والوقت عند الاعتماد</span>
+        <button type="button" class="btn-icon" onclick="clearSign()">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span id="clear-l">مسح</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- شريط الإجراءات -->
+  <div class="action-bar">
+    <div class="ab-info">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="ab-info-l">الموافقة تتطلب تقييماً وتوقيعاً — الإرجاع يتطلب ذكر السبب في الملاحظات</span>
+    </div>
+    <div class="ab-btns">
+      <button type="button" class="btn-return" onclick="returnReport()">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M9 14l-4-4 4-4M5 10h11a4 4 0 0 1 0 8h-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="return-l">إرجاع للتعديل</span>
+      </button>
+      <button type="button" class="btn-primary" onclick="approveReport()">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="approve-l">موافقة وتوقيع</span>
+      </button>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script src="nav.js?v=15"></script>
+<script>
+/* ════════════════════════════════════════════════
+   اعتماد وتوقيع شركة الطيران
+   يعرض بيانات التقرير (للقراءة)، ثم تقييم + توقيع.
+   الاعتماد: POST /approvals · الإرجاع: POST /reports/{kind}/{id}/return
+════════════════════════════════════════════════ */
+
+const params  = new URLSearchParams(location.search);
+const REPORT_ID = parseInt(params.get('id'), 10) || 0;
+const KIND = (params.get('kind') === 'departure') ? 'departure' : 'arrival';
+const VIEW_ONLY = params.get('mode') === 'view';   // عرض تقرير معتمد (للقراءة + التوقيع)
+let lang = localStorage.getItem('lang') || 'en';
+let rating = 0;
+
+/* ── الترجمات ── */
+const T = {
+  ar: {
+    title:'مراجعة واعتماد التقرير', sub:'مراجعة بيانات المناولة واعتمادها بالتوقيع', back:'رجوع',
+    s_general:'معلومات عامة', s_arr:'بيانات الوصول', s_pax:'المغادرة — الركاب', s_bag:'الحقائب',
+    rb_title:'تقرير مُعاد', rb_reason:'سبب الإرجاع', rb_by:'أُعيد بواسطة:', rb_date:'التاريخ:', vip:'كبار الشخصيات (VIP)',
+    s_board:'معلومات الصعود (Boarding)', s_extra:'معلومات تشغيلية إضافية', s_delays:'التأخيرات',
+    s_sup_remarks:'ملاحظات المشرف', s_rate:'تقييم رضا شركة الطيران', s_sign:'اعتماد وتوقيع موظف شركة الطيران',
+    c_code:'الكود', c_reason:'السبب', c_dur:'المدة (دقيقة)',
+    l_rate:'مستوى الرضا عن الخدمة', l_airline_remarks:'ملاحظات شركة الطيران',
+    sat_hint:'اضغط على النجوم لتقييم جودة الخدمة المقدّمة',
+    remark_ph:'اكتب ملاحظاتك حول جودة المناولة، الالتزام بالوقت، أو أي ملاحظات أخرى…',
+    remark_chips:['خدمة ممتازة','التزام بالوقت','تعامل احترافي','ملاحظة على الأمتعة','تأخير بسيط'],
+    l_rep_name:'اسم الموظف', l_rep_airline:'شركة الطيران', l_rep_pos:'الوظيفة / الرقم الوظيفي',
+    l_sign:'التوقيع', sign_hint:'وقّع هنا بإصبعك أو القلم', clear:'مسح',
+    sign_meta:'التوقيع يُلتقط كصورة مع التاريخ والوقت عند الاعتماد',
+    ab_info:'الموافقة تتطلب تقييماً وتوقيعاً — الإرجاع يتطلب ذكر السبب في الملاحظات',
+    return:'إرجاع للتعديل', approve:'موافقة وتوقيع',
+    rate_labels:['','ضعيف','مقبول','جيد','جيد جداً','ممتاز'],
+    flight:'الرحلة', route:'الوجهة', date:'التاريخ', sup:'المشرف', rtime:'وقت التقرير',
+    sta:'STA', ata:'ATA', std:'STD', atd:'ATD',
+    arr_gate:'رقم البوابة', arr_open:'فتح البوابة', arr_close:'إقفال البوابة',
+    first_pax:'أول راكب', last_pax:'آخر راكب', ttl_pax:'إجمالي الركاب الواصلين', ttl_wchr:'إجمالي الكراسي', arr_bag:'إجمالي الحقائب',
+    services:'الخدمات الإضافية', arr_remarks:'ملاحظات الوصول',
+    counter:'الكاونتر', staff:'Altanfeethi', pf:'ركاب F', pj:'ركاب J', pw:'ركاب W', py:'ركاب Y',
+    inf:'INF (رضيع)', hajj:'حج/عمرة', total_pax:'إجمالي الركاب',
+    b_normal:'الحقائب المسجّلة', b_wchr:'كرسي متحرك', b_cbbg:'CBBG', b_stcr:'STCR', b_avih:'AVIH/PETC',
+    b_vip:'VIP/CIP', b_hajj:'حقائب الحج', total_bag:'إجمالي الحقائب',
+    bgate:'البوابة', busjet:'باص/جسر', bstart:'بدء الصعود', bcomplete:'انتهاء الصعود',
+    bgopen:'فتح البوابة', bgclose:'إقفال البوابة', buses:'عدد الباصات', special:'مناولة خاصة',
+    actual:'العدد الفعلي للركاب', noshow:'عدم الحضور', offload:'الركاب المُنزَلون',
+    none:'—', err_rate:'يرجى اختيار تقييم الرضا', err_sign:'يرجى التوقيع قبل الاعتماد',
+    err_return:'يرجى كتابة سبب الإرجاع في ملاحظات شركة الطيران',
+    approved:'تم الاعتماد والتوقيع بنجاح', returned:'تم إرجاع التقرير للتعديل', jetway:'جسر', bus:'حافلة',
+  },
+  en: {
+    title:'Review & Approve Report', sub:'Review handling data and approve by signature', back:'Back',
+    s_general:'General Information', s_arr:'Arrival Data', s_pax:'Departure — Passengers', s_bag:'Baggage',
+    rb_title:'Returned Report', rb_reason:'Return Reason', rb_by:'Returned by:', rb_date:'Date:', vip:'VIP',
+    s_board:'Boarding Information', s_extra:'Additional Operational Info', s_delays:'Delays',
+    s_sup_remarks:'Supervisor Remarks', s_rate:'Airline Satisfaction', s_sign:'Airline Representative Approval & Signature',
+    c_code:'Code', c_reason:'Reason', c_dur:'Duration (min)',
+    l_rate:'Service satisfaction level', l_airline_remarks:'Airline Remarks',
+    sat_hint:'Tap the stars to rate the quality of service provided',
+    remark_ph:'Write your remarks about handling quality, punctuality, or any other notes…',
+    remark_chips:['Excellent service','On-time','Professional handling','Baggage note','Minor delay'],
+    l_rep_name:'Representative Name', l_rep_airline:'Airline', l_rep_pos:'Position / Staff No',
+    l_sign:'Signature', sign_hint:'Sign here with your finger or stylus', clear:'Clear',
+    sign_meta:'Signature is captured as an image with date & time on approval',
+    ab_info:'Approval requires a rating and signature — Return requires a reason in remarks',
+    return:'Return for Edit', approve:'Approve & Sign',
+    rate_labels:['','Poor','Fair','Good','Very Good','Excellent'],
+    flight:'Flight', route:'Route', date:'Date', sup:'Supervisor', rtime:'Report Time',
+    sta:'STA', ata:'ATA', std:'STD', atd:'ATD',
+    arr_gate:'Gate', arr_open:'Gate Open', arr_close:'Gate Close',
+    first_pax:'First Passenger', last_pax:'Last Passenger', ttl_pax:'Total Arriving Pax', ttl_wchr:'Total Wheelchairs', arr_bag:'Total Baggage',
+    services:'Additional Services', arr_remarks:'Arrival Remarks',
+    counter:'Counter', staff:'Altanfeethi', pf:'F Pax', pj:'J Pax', pw:'W Pax', py:'Y Pax',
+    inf:'INF (Infant)', hajj:'Hajj/Umrah', total_pax:'Total Passengers',
+    b_normal:'Checked-in Bags', b_wchr:'Wheelchair', b_cbbg:'CBBG', b_stcr:'STCR', b_avih:'AVIH/PETC',
+    b_vip:'VIP/CIP', b_hajj:'Hajj Baggage', total_bag:'Total Baggage',
+    bgate:'Gate', busjet:'Bus/Jetway', bstart:'Boarding Started', bcomplete:'Boarding Completed',
+    bgopen:'Gate Opened', bgclose:'Gate Closed', buses:'Total Buses', special:'Special Handling',
+    actual:'Actual Passenger Count', noshow:'No Show Count', offload:'Offloaded Passengers',
+    none:'—', err_rate:'Please select a satisfaction rating', err_sign:'Please sign before approving',
+    err_return:'Please write the return reason in airline remarks',
+    approved:'Approved & signed successfully', returned:'Report returned for edit', jetway:'Jetway', bus:'Bus',
+  },
+};
+
+/* ── بيانات التقرير (تُملأ من الـ API) ── */
+let DATA = { arrival:{services:[]}, pax:{}, baggage:{}, boarding:{}, delays:[] };
+
+/* ── تحويل كيان الـ API إلى شكل العرض ── */
+function mapEntity(d, kind) {
+  const t5 = s => s ? String(s).slice(0, 5) : '';
+  return {
+    id: d.id, flight: d.flightNo, route: d.route,
+    date: d.flightDate ? String(d.flightDate).slice(0, 10) : '',
+    supervisor: d.supervisorName,
+    report_time: d.reportTime ? String(d.reportTime).replace('T', ' ').slice(0, 16) : '',
+    sta: t5(d.sta), ata: t5(d.ata), std: t5(d.std), atd: t5(d.atd),
+    delays: (d.delays || []).map(x => ({ code: x.code, reason: x.reason, dur: x.durationMinutes })),
+    actual: d.actualPax, no_show: d.noShow, offloaded: d.offloaded, sup_remarks: d.remarks,
+    arrival: kind === 'arrival' ? {
+      gate: d.gateNo, open: t5(d.gateOpen), close: t5(d.gateClose),
+      first_pax: t5(d.firstPaxTime), last_pax: t5(d.lastPaxTime),
+      ttl_pax: d.ttlPaxArr, ttl_wchr: d.ttlWchr, bag: d.bagTotal,
+      services: (d.services || []).map(s => ({ name: s.name, count: s.count })), remarks: d.remarks
+    } : { services: [] },
+    pax: kind === 'departure' ? { counter: d.counterNo, staff: d.paxExec, F: d.paxF, J: d.paxJ, W: d.paxW, Y: d.paxY, inf: d.paxInf, hajj: d.paxHajj, vip: d.paxVip, total: d.paxTotal } : {},
+    baggage: kind === 'departure' ? { normal: d.bagNormal, wchr: d.bagWchr, cbbg: d.bagCbbg, stcr: d.bagStcr, avih: d.bagAvih, vip: d.bagVip, hajj: d.bagHajj, total: d.bagTotal } : {},
+    boarding: kind === 'departure' ? { gate: d.boardingGate, mode: (d.boardingMode || '').toLowerCase(), started: t5(d.boardingStarted), completed: t5(d.boardingCompleted), gate_open: t5(d.gateOpened), gate_close: t5(d.gateClosed), buses: d.totalBuses, special: d.specialHandling } : {},
+  };
+}
+
+/* ── إخفاء الأقسام غير المتعلقة بنوع التقرير ── */
+function hideSections(kind) {
+  const hide = (rvId, yes) => { const e = document.getElementById(rvId)?.closest('.sec'); if (e) e.style.display = yes ? 'none' : ''; };
+  hide('rv-arr', kind !== 'arrival');
+  hide('rv-pax', kind !== 'departure');
+  hide('rv-bag', kind !== 'departure');
+  hide('rv-board', kind !== 'departure');
+  hide('rv-delays', kind === 'arrival');   // لا تأخيرات في الوصول
+}
+
+/* ── جلب التقرير من الـ API ── */
+async function loadReport() {
+  if (!REPORT_ID) return;
+  const path = KIND === 'arrival' ? '/arrival' : '/departure';
+  const res = await fetch(`${SGS.API}${path}/${REPORT_ID}`, { headers: SGS.H() });
+  if (res.status === 401) { localStorage.clear(); location.href = 'index.html'; return; }
+  if (!res.ok) { toast(lang === 'ar' ? 'تعذّر تحميل التقرير' : 'Failed to load report'); return; }
+  DATA = mapEntity(await res.json(), KIND);
+  hideSections(KIND);
+  renderReview();
+  // شركة الطيران تُشتق من رقم الرحلة (SV / F3 / XY) وتكون للقراءة فقط؛
+  // إن لم يكن للرحلة رمز معروف يبقى الحقل مفتوحاً ليكتبه ممثل الشركة
+  const af = document.getElementById('f-rep-airline');
+  if (af) { const code = SGS.airlineCode(DATA.flight); af.value = code; af.readOnly = !!code; }
+}
+
+/* ── وضع العرض فقط (تقرير معتمد): يعرض التوقيع كصورة ويُخفي أدوات الإدخال ── */
+function enterViewMode() {
+  document.querySelector('.action-bar')?.style.setProperty('display', 'none');
+  document.getElementById('rate').style.pointerEvents = 'none';
+  document.getElementById('remark-chips')?.remove();
+  const ta = document.getElementById('f-airline-remarks'); if (ta) ta.readOnly = true;
+  ['f-rep-name', 'f-rep-airline', 'f-rep-pos'].forEach(id => { const e = document.getElementById(id); if (e) e.readOnly = true; });
+  // استبدال لوحة التوقيع بصورة التوقيع
+  const wrap = document.querySelector('.sign-wrap');
+  if (wrap) wrap.innerHTML = '<img id="sign-img" alt="signature" style="width:100%;max-height:220px;object-fit:contain;border:1.5px solid var(--bd);border-radius:12px;background:#fff;">';
+  document.querySelector('.sign-bar')?.style.setProperty('display', 'none');
+  document.getElementById('t-title').textContent = lang === 'ar' ? 'التقرير المعتمد' : 'Approved Report';
+}
+
+async function loadApproval() {
+  const res = await fetch(`${SGS.API}/approvals/${KIND}/${REPORT_ID}`, { headers: SGS.H() });
+  if (!res.ok) return;
+  const a = await res.json();
+  if (!a) return;
+  if (a.decision === 'returned') {
+    document.getElementById('rb-reason').textContent = a.returnReason || '—';
+    document.getElementById('rb-by').textContent = a.repName || '—';
+    document.getElementById('rb-date').textContent = a.approvedAt || '—';
+    document.getElementById('return-banner').style.display = 'block';
+    document.getElementById('s-rate')?.closest('.sec')?.style.setProperty('display', 'none');
+    document.getElementById('s-sign')?.closest('.sec')?.style.setProperty('display', 'none');
+    return;
+  }
+  setRating(a.satisfaction || 0);
+  const ta = document.getElementById('f-airline-remarks'); if (ta) { ta.value = a.airlineRemarks || ''; updateCount(); }
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.value = v || ''; };
+  set('f-rep-name', a.repName); set('f-rep-airline', a.repAirline); set('f-rep-pos', a.repPosition);
+  const img = document.getElementById('sign-img'); if (img && /^data:image\/(png|jpeg);base64,/.test(a.signature || '')) img.src = a.signature;
+}
+
+/* ── أدوات عرض ── */
+function val(v){ const t=T[lang]; return (v===''||v===null||v===undefined) ? `<span class="rv-v empty">${t.none}</span>` : esc(v); }
+function rv(label, value, mono){ return `<div class="rv"><span class="rv-l">${label}</span><span class="rv-v ${mono?'mono':''}">${val(value)}</span></div>`; }
+
+/* ── بناء المراجعة ── */
+function renderReview() {
+  const t = T[lang], d = DATA;
+
+  document.getElementById('flight-chip').textContent = `${d.flight} · ${d.route}`;
+
+  document.getElementById('rv-general').innerHTML =
+    rv(t.flight, d.flight, true) + rv(t.route, d.route) + rv(t.date, d.date, true) +
+    rv(t.sta, d.sta, true) + rv(t.ata, d.ata, true) + rv(t.std, d.std, true) + rv(t.atd, d.atd, true) +
+    rv(t.sup, d.supervisor) + rv(t.rtime, d.report_time, true);
+
+  const svc = (d.arrival.services||[]).map(s=>`${s.name} (${s.count})`).join('، ') || '';   // يُهرَّب داخل val()
+  document.getElementById('rv-arr').innerHTML =
+    rv(t.arr_gate, d.arrival.gate, true) +
+    rv(t.ttl_pax, d.arrival.ttl_pax, true) + rv(t.ttl_wchr, d.arrival.ttl_wchr, true) + rv(t.arr_bag, d.arrival.bag, true) +
+    `<div class="rv col-all"><span class="rv-l">${t.services}</span><span class="rv-v">${val(svc)}</span></div>` +
+    `<div class="rv col-all"><span class="rv-l">${t.arr_remarks}</span><span class="rv-v">${val(d.arrival.remarks)}</span></div>`;
+
+  const p = d.pax;
+  document.getElementById('rv-pax').innerHTML =
+    rv(t.counter, p.counter, true) + rv(t.staff, p.staff, true) +
+    rv(t.pf, p.F, true) + rv(t.pj, p.J, true) + rv(t.pw, p.W, true) + rv(t.py, p.Y, true) +
+    rv(t.inf, p.inf, true) + rv(t.hajj, p.hajj, true) + rv(t.vip, p.vip, true) +
+    `<div class="rv col-all"><span class="rv-l">${t.total_pax}</span><span class="mini-total green" style="width:fit-content;">${SGS.fmt(p.total)}</span></div>` +
+    rv(t.noshow, d.no_show, true) + rv(t.offload, d.offloaded, true);
+
+  const b = d.baggage;
+  document.getElementById('rv-bag').innerHTML =
+    rv(t.b_normal, b.normal, true) + rv(t.b_wchr, b.wchr, true) + rv(t.b_cbbg, b.cbbg, true) +
+    rv(t.b_stcr, b.stcr, true) + rv(t.b_avih, b.avih, true) + rv(t.b_vip, b.vip, true) + rv(t.b_hajj, b.hajj, true) +
+    `<div class="rv col-all"><span class="rv-l">${t.total_bag}</span><span class="mini-total blue" style="width:fit-content;">${SGS.fmt(b.total)}</span></div>`;
+
+  const bo = d.boarding;
+  const modeLbl = bo.mode === 'bus' ? t.bus : (bo.mode === 'jetway' ? t.jetway : '');
+  document.getElementById('rv-board').innerHTML =
+    rv(t.bgate, bo.gate, true) + rv(t.busjet, modeLbl) + rv(t.bstart, bo.started, true) + rv(t.bcomplete, bo.completed, true) +
+    rv(t.buses, bo.buses, true) +
+    `<div class="rv col-all"><span class="rv-l">${t.special}</span><span class="rv-v">${val(bo.special)}</span></div>`;
+
+  document.getElementById('rv-delays').innerHTML = (d.delays&&d.delays.length)
+    ? d.delays.map(x=>`<tr><td class="mono" style="font-family:'DM Mono',monospace;font-weight:700;">${val(x.code)}</td><td>${val(x.reason)}</td><td style="font-family:'DM Mono',monospace;">${val(x.dur)}</td></tr>`).join('')
+    : `<tr><td colspan="3" class="empty" style="padding:14px;">${t.none}</td></tr>`;
+
+  document.getElementById('rv-sup-remarks').innerHTML = val(d.sup_remarks);
+}
+
+/* ── طي/فتح ── */
+function toggleSec(head){ head.closest('.sec').classList.toggle('collapsed'); }
+
+/* ── تقييم النجوم (محسّن: معاينة عند المرور + شارة ملوّنة) ── */
+const RATE_COLOR = {1:'#DC2626',2:'#EA580C',3:'#C9A84C',4:'#2563EB',5:'#16A34A'};
+const STAR_SVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.8 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>`;
+function renderStars() {
+  const wrap = document.getElementById('rate');
+  wrap.innerHTML = '';
+  for (let i=1;i<=5;i++){
+    const b = document.createElement('button');
+    b.type='button'; b.className='star'+(i<=rating?' on':''); b.dataset.v=i;
+    b.innerHTML = STAR_SVG;
+    b.onclick = () => setRating(i);
+    b.onmouseenter = () => paintStars(i);
+    wrap.appendChild(b);
+  }
+  wrap.onmouseleave = () => paintStars(rating);
+  updateRateBadge(rating);
+}
+function paintStars(n){
+  document.querySelectorAll('#rate .star').forEach(s => s.classList.toggle('on', (+s.dataset.v) <= n));
+  updateRateBadge(n);
+}
+function setRating(v){ rating=v; paintStars(v); }
+function updateRateBadge(v){
+  const t = T[lang], badge = document.getElementById('rate-badge');
+  if (!v){ badge.classList.remove('show'); badge.textContent=''; return; }
+  const c = RATE_COLOR[v];
+  badge.style.background = c + '1A';
+  badge.style.color = c;
+  badge.innerHTML = `<span style="font-size:14px;line-height:1;">★</span> ${t.rate_labels[v]}`;
+  badge.classList.add('show');
+}
+
+/* ── مقترحات سريعة للملاحظات + عدّاد الأحرف ── */
+function renderChips(){
+  const wrap = document.getElementById('remark-chips'), t = T[lang];
+  wrap.innerHTML = (t.remark_chips||[]).map(c => `<button type="button" class="chip" onclick="addChip(this)">${c}</button>`).join('');
+}
+function addChip(b){
+  const ta = document.getElementById('f-airline-remarks');
+  const txt = b.textContent.trim();
+  const sep = lang==='ar' ? '، ' : ', ';
+  ta.value = ta.value.trim() ? (ta.value.trim() + sep + txt) : txt;
+  ta.value = ta.value.slice(0, 500);
+  updateCount(); ta.focus();
+}
+function updateCount(){
+  const ta = document.getElementById('f-airline-remarks');
+  document.getElementById('remark-count').textContent = `${ta.value.length} / 500`;
+}
+
+/* ════ لوحة التوقيع (Pointer Events، بدون مكتبات) ════ */
+let canvas, ctx, drawing=false, hasSign=false, lastX=0, lastY=0;
+function initSign() {
+  canvas = document.getElementById('sign-pad');
+  setupCanvas();
+  canvas.addEventListener('pointerdown', startDraw);
+  canvas.addEventListener('pointermove', moveDraw);
+  window.addEventListener('pointerup', endDraw);
+  canvas.addEventListener('pointercancel', endDraw);
+  // عند تغيير الحجم/الدوران: أعِد ضبط الأبعاد فقط إذا لم يوقّع المستخدم (حتى لا نمسح توقيعه)
+  window.addEventListener('resize', () => { if (!hasSign) setupCanvas(); });
+}
+function setupCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = Math.round(rect.width  * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+  ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.lineWidth = 2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle = '#0F172A';
+}
+function posOf(e){ const r=canvas.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; }
+function startDraw(e){
+  e.preventDefault();
+  drawing=true;
+  const p=posOf(e); lastX=p.x; lastY=p.y;
+  if(!hasSign){ hasSign=true; document.getElementById('sign-hint').classList.add('hide'); canvas.classList.add('signed'); }
+  try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
+  // نقطة عند الضغط بدون حركة
+  ctx.beginPath(); ctx.arc(lastX,lastY,1.1,0,Math.PI*2); ctx.fillStyle='#0F172A'; ctx.fill();
+}
+function moveDraw(e){
+  if(!drawing) return;
+  e.preventDefault();
+  const p=posOf(e);
+  ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke();
+  lastX=p.x; lastY=p.y;
+}
+function endDraw(){ drawing=false; }
+function clearSign(){
+  setupCanvas();                 // إعادة الأبعاد تُفرّغ الـ canvas
+  hasSign=false;
+  document.getElementById('sign-hint').classList.remove('hide');
+  canvas.classList.remove('signed');
+}
+function signatureDataURL(){ return hasSign ? canvas.toDataURL('image/png') : null; }
+
+const gv = id => document.getElementById(id).value;
+
+/* ── موافقة وتوقيع → POST /approvals ── */
+async function approveReport() {
+  const t = T[lang];
+  if (!rating) return showErr(t.err_rate);
+  if (!hasSign) return showErr(t.err_sign);
+  hideErr();
+  const body = {
+    kind: KIND, reportId: REPORT_ID, satisfaction: rating,
+    airlineRemarks: gv('f-airline-remarks'),
+    rep: { name: gv('f-rep-name'), airline: gv('f-rep-airline'), position: gv('f-rep-pos') },
+    signature: signatureDataURL(),
+  };
+  try {
+    const res = await fetch(`${SGS.API}/approvals`, { method: 'POST', headers: SGS.HJ(), body: JSON.stringify(body) });
+    if (res.status === 401) { localStorage.clear(); location.href = 'index.html'; return; }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); return showErr(e.detail || ('HTTP ' + res.status)); }
+    toast(t.approved);
+    setTimeout(() => location.href = 'main.html', 1500);
+  } catch (e) { showErr(e.message); }
+}
+
+/* ── إرجاع للتعديل → POST /reports/{kind}/{id}/return ── */
+async function returnReport() {
+  const t = T[lang];
+  const reason = document.getElementById('f-airline-remarks').value.trim();
+  if (!reason) return showErr(t.err_return);
+  hideErr();
+  try {
+    const res = await fetch(`${SGS.API}/reports/${KIND}/${REPORT_ID}/return`, { method: 'POST', headers: SGS.HJ(), body: JSON.stringify({ reason }) });
+    if (res.status === 401) { localStorage.clear(); location.href = 'index.html'; return; }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); return showErr(e.detail || ('HTTP ' + res.status)); }
+    toast(t.returned);
+    setTimeout(() => location.href = 'main.html', 1500);
+  } catch (e) { showErr(e.message); }
+}
+
+/* ── تنبيه / Toast ── */
+function showErr(m){ const a=document.getElementById('err-alert'); document.getElementById('err-txt').textContent=m; a.classList.add('show'); window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); }
+function hideErr(){ document.getElementById('err-alert').classList.remove('show'); }
+let toastTimer;
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2600); }
+
+
+/* ── تصدير PDF (تنزيل موثّق بالتوكن) ── */
+async function exportPdf(){
+  toast(lang==='ar'?'جارٍ التصدير…':'Exporting…');
+  const res = await fetch(`${SGS.API}/export/report/${KIND}/${REPORT_ID}/pdf`, { headers: SGS.H() });
+  if (res.status === 401) { localStorage.clear(); location.href='index.html'; return; }
+  if (!res.ok) { toast(lang==='ar'?'تعذّر التصدير':'Export failed'); return; }
+  const cd = res.headers.get('Content-Disposition') || '';
+  const m = cd.match(/filename="?([^"]+)"?/); const name = m ? m[1] : `Report_${REPORT_ID}.pdf`;
+  const blob = await res.blob(); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+
+/* ── تطبيق اللغة ── */
+function setLang(l) {
+  lang = l;
+  const t = T[l];
+  const set = (id, v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('t-title',t.title); set('t-sub',t.sub); set('t-back-l',t.back);
+  set('pdf-l', lang==='ar'?'تصدير PDF':'Export PDF');
+  set('s-general',t.s_general); set('s-arr',t.s_arr); set('s-pax',t.s_pax); set('s-bag',t.s_bag);
+  set('rb-title',t.rb_title); set('rb-l-reason',t.rb_reason); set('rb-l-by',t.rb_by); set('rb-l-date',t.rb_date);
+  set('s-board',t.s_board); set('s-extra',t.s_delays); set('s-delays',t.s_delays);
+  set('s-sup-remarks',t.s_sup_remarks); set('s-rate',t.s_rate); set('s-sign',t.s_sign);
+  set('c-code',t.c_code); set('c-reason',t.c_reason); set('c-dur',t.c_dur);
+  set('sat-hint',t.sat_hint);
+  set('l-rep-name',t.l_rep_name+' '); set('l-rep-airline',t.l_rep_airline+' '); set('l-rep-pos',t.l_rep_pos);
+  set('sign-hint',t.sign_hint); set('clear-l',t.clear); set('sign-meta',t.sign_meta);
+  set('ab-info-l',t.ab_info); set('return-l',t.return); set('approve-l',t.approve);
+  // عناصر التسمية المطلوبة (* تبقى)
+  document.getElementById('l-rate').innerHTML = t.l_rate + ' <span>*</span>';
+  document.querySelector('#l-airline-remarks span').textContent = t.l_airline_remarks;
+  document.getElementById('f-airline-remarks').placeholder = t.remark_ph;
+  document.getElementById('l-rep-name').innerHTML = t.l_rep_name + ' <span>*</span>';
+  document.getElementById('l-rep-airline').innerHTML = t.l_rep_airline + ' <span>*</span>';
+  document.getElementById('l-sign').innerHTML = t.l_sign + ' <span style="color:var(--red)">*</span>';
+  renderReview();
+  renderStars();
+  renderChips();
+  updateCount();
+}
+
+/* ── الإقلاع ── */
+document.addEventListener('DOMContentLoaded', () => {
+  if (!SGS.can('export.pdf')) document.getElementById('pdf-btn').style.display = 'none';
+  hideSections(KIND);
+  renderReview();
+  renderStars();
+  initSign();
+  setLang(lang);
+  (async () => {
+    await loadReport();
+    if (VIEW_ONLY) { enterViewMode(); await loadApproval(); }
+  })();
+});
+</script>
+</body>
+</html>

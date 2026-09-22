@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGS Forms — Logs</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="Themes.css?v=9">
+<style>
+.filter-bar{ display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; background:var(--w); border:1px solid var(--bd); border-radius:var(--r); padding:14px 16px; margin-bottom:14px; box-shadow:var(--sh); }
+.fb-field{ display:flex; flex-direction:column; gap:5px; }
+.fb-field label{ font-size:11px; font-weight:700; color:var(--mu); }
+.fb-field input, .fb-field select{ padding:8px 12px; border:1.5px solid var(--bd); border-radius:9px; font-size:13px; font-family:'Tajawal',sans-serif; color:var(--tx); background:var(--w); outline:none; }
+.fb-field input:focus, .fb-field select:focus{ border-color:var(--g); }
+.fb-count{ margin-inline-start:auto; font-size:12px; color:var(--mu); align-self:center; }
+.log-time{ font-family:'DM Mono',monospace; font-size:12px; color:var(--mu); white-space:nowrap; }
+.flt-no{ font-family:'DM Mono',monospace; font-weight:700; color:var(--tx2); }
+.act-bdg{ display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:700; }
+.a-create{ background:var(--gl); color:var(--g); }
+.a-update{ background:var(--bluel,#EEF4FF); color:var(--blue,#2563EB); }
+.a-submit{ background:var(--goldl,#FDF8EE); color:var(--gold,#C9A84C); }
+.a-approve{ background:#E8F5F0; color:#0E7C5A; }
+.a-return{ background:var(--redl); color:var(--red); }
+.a-delete{ background:#F1F5F9; color:#475569; text-decoration:line-through; }
+</style>
+</head>
+<body>
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-l">
+      <div class="pg-title" id="t-title">سجل التحديثات</div>
+      <div class="pg-sub" id="t-sub" style="color:var(--mu);">كل عملية على التقارير — للأدمن فقط</div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="fb-field"><label id="fl-q">بحث</label><input type="search" class="sgs-q" id="flt-q" maxlength="50" oninput="onSearch()"></div>
+    <div class="fb-field"><label id="fl-date">التاريخ</label><input type="date" id="flt-date" onchange="page=1; load()"></div>
+    <div class="fb-field"><label id="fl-action">الإجراء</label><select id="flt-action" onchange="page=1; load()"></select></div>
+    <div class="fb-field"><label id="fl-kind">النوع</label><select id="flt-kind" onchange="page=1; load()"></select></div>
+    <button class="btn-icon" onclick="clearFilters()" id="fl-clear">مسح الفلتر</button>
+    <span class="fb-count" id="fl-count"></span>
+  </div>
+
+  <div class="card">
+    <div class="card-body-np">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th id="c-time">الوقت</th>
+              <th id="c-user">المستخدم</th>
+              <th id="c-role">الدور</th>
+              <th id="c-station">المحطة</th>
+              <th id="c-action">الإجراء</th>
+              <th id="c-kind">النوع</th>
+              <th id="c-flight">الرحلة</th>
+              <th id="c-details">تفاصيل</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="empty" style="display:none;"><div class="empty-icon">🗂️</div><span id="empty-txt">لا توجد سجلات</span></div>
+    </div>
+  </div>
+
+  <div class="pager" id="pager" style="display:none;"></div>
+</main>
+
+<script src="nav.js?v=15"></script>
+<script>
+let lang = localStorage.getItem('lang') || 'en';
+const T = {
+  ar:{ title:'سجل التحديثات', sub:'كل عملية على التقارير — للأدمن فقط',
+       c_time:'الوقت', c_user:'المستخدم', c_role:'الدور', c_station:'المحطة', c_action:'الإجراء', c_kind:'النوع', c_flight:'الرحلة', c_details:'تفاصيل',
+       fl_date:'التاريخ', fl_action:'الإجراء', fl_kind:'النوع', fl_clear:'مسح الفلتر', count:'سجل',
+       all:'الكل', empty:'لا توجد سجلات مطابقة',
+       acts:{ create:'إنشاء', update:'تعديل', submit:'إرسال', approve:'اعتماد', 'return':'إرجاع', 'delete':'حذف' },
+       kinds:{ arrival:'وصول', departure:'مغادرة', coordination:'تنسيق' },
+       roles:{ admin:'مدير النظام', management:'الإدارة', data_entry:'مشرف مناولة' } },
+  en:{ title:'Activity Logs', sub:'Every action on reports — Admin only',
+       c_time:'Time', c_user:'User', c_role:'Role', c_station:'Station', c_action:'Action', c_kind:'Type', c_flight:'Flight', c_details:'Details',
+       fl_date:'Date', fl_action:'Action', fl_kind:'Type', fl_clear:'Clear', count:'entries',
+       all:'All', empty:'No matching logs',
+       acts:{ create:'Create', update:'Update', submit:'Submit', approve:'Approve', 'return':'Return', 'delete':'Delete' },
+       kinds:{ arrival:'Arrival', departure:'Departure', coordination:'Coordination' },
+       roles:{ admin:'Admin', management:'Management', data_entry:'Handling Supervisor' } },
+};
+
+let LOGS = [];
+let page = 1, pageSize = SGS.pageSize, total = 0;
+
+function fillSelects(){
+  const t = T[lang];
+  const av = document.getElementById('flt-action');
+  av.innerHTML = `<option value="">${t.all}</option>` +
+    Object.entries(t.acts).map(([k,v]) => `<option value="${k}">${v}</option>`).join('');
+  const kv = document.getElementById('flt-kind');
+  kv.innerHTML = `<option value="">${t.all}</option>` +
+    Object.entries(t.kinds).map(([k,v]) => `<option value="${k}">${v}</option>`).join('');
+}
+
+async function load(){
+  const d = document.getElementById('flt-date').value;
+  const a = document.getElementById('flt-action').value;
+  const k = document.getElementById('flt-kind').value;
+  const qs = new URLSearchParams();
+  if (d) qs.set('date', d);
+  if (a) qs.set('action', a);
+  if (k) qs.set('kind', k);
+  const q = document.getElementById('flt-q').value.trim();
+  if (q) qs.set('q', q);
+  qs.set('page', String(page));
+  qs.set('pageSize', String(pageSize));
+  const res = await fetch(`${SGS.API}/logs?${qs}`, { headers: SGS.H() });
+  if (res.status === 401) { localStorage.clear(); location.href='index.html'; return; }
+  const data = res.ok ? (await res.json()) : {};
+  LOGS  = data.items || [];
+  total = data.total || 0;
+  render();
+  renderPager();
+}
+
+
+function renderPager(){
+  SGS.pager('pager', page, total, pageSize, p => { page = p; load(); });
+}
+
+function render(){
+  const t = T[lang];
+  const rows = document.getElementById('rows');
+  document.getElementById('empty').style.display = LOGS.length ? 'none' : '';
+  document.getElementById('empty-txt').textContent = t.empty;
+  document.getElementById('fl-count').textContent = `${total} ${t.count}`;
+  rows.innerHTML = LOGS.map(l => {
+    const act = t.acts[l.action] || l.action;
+    const kind = t.kinds[l.reportKind] || l.reportKind || '—';
+    const rl = t.roles[l.userRole] || l.userRole || '—';
+    const flt = l.flightNo ? `<span class="flt-no">${esc(l.flightNo)}</span>` : '—';
+    return `<tr>
+      <td class="log-time">${esc(l.at)}</td>
+      <td>${esc(l.userName)||'—'}</td>
+      <td>${esc(rl)}</td>
+      <td>${esc(l.stationCode)||'—'}</td>
+      <td><span class="act-bdg a-${esc(String(l.action).replace(/[^a-z]/g, ''))}">${esc(act)}</span></td>
+      <td>${esc(kind)}</td>
+      <td>${flt}</td>
+      <td style="color:var(--mu);font-size:12px;">${esc(l.details)||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+const onSearch = SGS.debounce(() => { page = 1; load(); });
+
+function clearFilters(){
+  document.getElementById('flt-date').value = '';
+  document.getElementById('flt-action').value = '';
+  document.getElementById('flt-kind').value = '';
+  document.getElementById('flt-q').value = '';
+  page = 1;
+  load();
+}
+
+function setLang(l){
+  lang = l; const t = T[l];
+  const set = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('t-title',t.title); set('t-sub',t.sub);
+  set('c-time',t.c_time); set('c-user',t.c_user); set('c-role',t.c_role); set('c-station',t.c_station);
+  set('c-action',t.c_action); set('c-kind',t.c_kind); set('c-flight',t.c_flight); set('c-details',t.c_details);
+  set('fl-date',t.fl_date); set('fl-action',t.fl_action); set('fl-kind',t.fl_kind); set('fl-clear',t.fl_clear);
+  set('fl-q', lang==='ar' ? 'بحث' : 'Search'); document.getElementById('flt-q').placeholder = lang==='ar' ? 'المستخدم، الرحلة، التفاصيل…' : 'User, flight, details…';
+  set('empty-txt',t.empty);
+  fillSelects();
+  render();
+  renderPager();
+}
+
+(async function init(){
+  fillSelects();
+  await load();
+  setLang(lang);
+})();
+</script>
+</body>
+</html>

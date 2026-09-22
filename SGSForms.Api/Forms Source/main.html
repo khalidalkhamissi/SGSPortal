@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGS Forms — الرئيسية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="Themes.css?v=9">
+
+<style>
+/* ── صفّ الأبطال: بانران جنباً إلى جنب، يتراصّان تلقائياً دون media query ── */
+.hero-row{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));
+  gap:18px; margin-bottom:22px;
+}
+
+/* ── الشريط البطل (Hero) — إنشاء تقرير ── */
+.hero{
+  position:relative;
+  background:linear-gradient(120deg, var(--g) 0%, var(--gm) 55%, #00b377 100%);
+  border-radius:18px; padding:28px 30px; margin-bottom:0; overflow:hidden;
+  display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between; gap:18px;
+  box-shadow:0 12px 34px rgba(0,108,78,.28);
+}
+.hero::before{
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse at 12% 120%, rgba(201,168,76,.28) 0%, transparent 50%),
+    radial-gradient(ellipse at 95% -20%, rgba(255,255,255,.12) 0%, transparent 45%);
+  pointer-events:none;
+}
+.hero-txt{ position:relative; z-index:1; color:#fff; }
+.hero-eyebrow{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:11px; font-weight:700; letter-spacing:.4px;
+  background:rgba(255,255,255,.16); color:#fff;
+  padding:4px 11px; border-radius:20px; margin-bottom:10px; backdrop-filter:blur(4px);
+}
+.hero-title{ font-size:26px; font-weight:800; line-height:1.2; letter-spacing:-.4px; }
+.hero-sub{ font-size:13px; opacity:.85; margin-top:6px; font-weight:300; max-width:100%; line-height:1.6; }
+.hero-create{
+  position:relative; z-index:1;
+  display:inline-flex; align-items:center; gap:10px;
+  padding:15px 28px; border:none; border-radius:14px;
+  background:#fff; color:var(--g);
+  font-family:'Tajawal',sans-serif; font-size:17px; font-weight:800; cursor:pointer;
+  box-shadow:0 8px 24px rgba(0,0,0,.18); transition:transform .15s, box-shadow .15s; white-space:nowrap;
+}
+.hero-create:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 12px 30px rgba(0,0,0,.24); }
+.hero-create:active{ transform:translateY(0) scale(1); }
+/* متغيّر التنسيق — الذهبي هو لون التنسيق المعتمد في النظام (dir-coord / type-pill) */
+.hero.crd{
+  background:linear-gradient(120deg, #7a5f16 0%, #a5861f 55%, #c9a84c 100%);
+  box-shadow:0 12px 34px rgba(122,95,22,.28);
+}
+.hero.crd .hero-create{ color:#7a5f16; }
+.hero.crd .hero-create .plus{ background:linear-gradient(135deg, #7a5f16, #a5861f); }
+.hero-create .plus{
+  width:30px; height:30px; border-radius:50%;
+  background:linear-gradient(135deg, var(--g), var(--gm)); color:#fff;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+
+/* ── بطاقات الوصول السريع ── */
+.qa-head{ font-size:14px; font-weight:800; color:var(--tx); margin:6px 2px 12px; }
+.qa-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:14px; }
+.qa-card{
+  position:relative; display:flex; align-items:center; gap:14px;
+  background:var(--w); border:1.5px solid var(--bd); border-radius:16px; padding:18px;
+  text-decoration:none; cursor:pointer; transition:transform .14s, box-shadow .14s, border-color .14s;
+  overflow:hidden;
+}
+.qa-card::before{
+  content:''; position:absolute; inset-inline-start:0; top:0; bottom:0; width:4px;
+  background:var(--qa-color); opacity:.85;
+}
+.qa-card:hover{ transform:translateY(-3px); box-shadow:0 10px 26px rgba(2,32,22,.10); border-color:var(--qa-color); }
+.qa-ico{
+  width:48px; height:48px; border-radius:13px; flex-shrink:0;
+  background:var(--qa-bg); color:var(--qa-color);
+  display:flex; align-items:center; justify-content:center;
+}
+.qa-info{ flex:1; min-width:0; }
+.qa-count{ font-size:26px; font-weight:800; color:var(--tx); line-height:1; font-family:'DM Mono',monospace; }
+.qa-label{ font-size:12.5px; color:var(--mu); margin-top:5px; font-weight:600; }
+.qa-arrow{ color:var(--qa-color); opacity:.6; flex-shrink:0; }
+
+/* خيارات اتجاه التقرير في المودال */
+.dir-opt{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:22px 14px; border-radius:14px;
+  border:1.5px solid var(--bd); background:var(--w); cursor:pointer; font-family:'Tajawal',sans-serif; transition:all .18s; }
+.dir-opt:hover{ transform:translateY(-2px); box-shadow:var(--sh2); }
+.dir-opt-ico{ width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; }
+.dir-opt.arr .dir-opt-ico{ background:var(--gl); color:var(--g); }
+.dir-opt.dep .dir-opt-ico{ background:var(--bluel); color:var(--blue); }
+.dir-opt.arr:hover{ border-color:var(--g); }
+.dir-opt.dep:hover{ border-color:var(--blue); }
+.dir-opt-t{ font-size:16px; font-weight:800; color:var(--tx); margin-top:4px; }
+.dir-opt-s{ font-size:11px; color:var(--mu); font-family:'DM Mono',monospace; }
+
+#toast{
+  position:fixed; inset-inline-end:20px; bottom:20px; z-index:1100;
+  background:var(--tx); color:#fff; padding:13px 18px; border-radius:12px;
+  font-size:13px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.25);
+  display:flex; align-items:center; gap:9px; transform:translateY(140%); opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+}
+#toast.show{ transform:translateY(0); opacity:1; }
+</style>
+</head>
+
+<body>
+<main class="main">
+
+  <!-- ── الشريط العلوي ── -->
+  <div class="topbar">
+    <div class="topbar-l">
+      <div class="pg-title" id="t-title">الرئيسية</div>
+      <div class="pg-sub"><span class="dot"></span><span id="t-sub">إنشاء التقارير ومتابعة حالتها</span></div>
+    </div>
+    <div class="topbar-r">
+      <div class="ap-badge">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+          <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="currentColor"/>
+        </svg>
+        <span id="t-station">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── شريطا البطل: تقرير المناولة + نموذج التنسيق ── -->
+  <div class="hero-row" id="hero-row">
+
+    <div class="hero" id="hero-report">
+      <div class="hero-txt">
+        <span class="hero-eyebrow">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6 4.5 2.3 7.1L12 16.6 5.7 21l2.3-7.1-6-4.5h7.6z" fill="currentColor"/></svg>
+          <span id="h-eyebrow">تقرير جديد</span>
+        </span>
+        <div class="hero-title" id="h-title">تقرير مناولة الرحلات</div>
+        <div class="hero-sub" id="h-sub">ابدأ تقريراً جديداً لمناولة رحلة (وصول أو مغادرة). يُحفظ تلقائياً كمسودة قابلة للتعديل خلال ٢٤ ساعة قبل اعتماده.</div>
+      </div>
+      <button class="hero-create" onclick="createReport()">
+        <span class="plus"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+        <span id="h-create">إنشاء تقرير</span>
+      </button>
+    </div>
+
+    <div class="hero crd" id="hero-coord">
+      <div class="hero-txt">
+        <span class="hero-eyebrow">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6 4.5 2.3 7.1L12 16.6 5.7 21l2.3-7.1-6-4.5h7.6z" fill="currentColor"/></svg>
+          <span id="hc-eyebrow">نموذج جديد</span>
+        </span>
+        <div class="hero-title" id="hc-title">نموذج التنسيق</div>
+        <div class="hero-sub" id="hc-sub">ابدأ نموذج تنسيق جديد (Coordination Sheet / Time Chart) لمتابعة أنشطة مناولة الرحلة وأوقاتها المخططة والفعلية.</div>
+      </div>
+      <button class="hero-create" onclick="goCoordination()">
+        <span class="plus"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+        <span id="hc-create">إنشاء نموذج</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ── الوصول السريع ── -->
+  <div class="qa-head" id="qa-head">الوصول السريع</div>
+  <div class="qa-grid" id="qa-grid"></div>
+  <div id="qa-none" style="display:none;padding:34px 18px;text-align:center;color:var(--mu);font-size:14px;font-weight:600;"></div>
+
+</main>
+
+<!-- ── نافذة اختيار اتجاه التقرير ── -->
+<div class="overlay" id="dir-overlay" onclick="if(event.target===this)closeDir()">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-h">
+      <div class="modal-t" id="m-title">اختر نوع التقرير</div>
+      <button class="modal-x" onclick="closeDir()">&times;</button>
+    </div>
+    <div class="modal-b">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <button class="dir-opt arr" onclick="goCreate('arrival')">
+          <span class="dir-opt-ico"><svg width="26" height="26" fill="none" viewBox="0 0 24 24"><path d="M19 19H5M12 4v9m0 0l4-4m-4 4L8 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="dir-opt-t" id="m-arr">وصول</span><span class="dir-opt-s">Arrival</span>
+        </button>
+        <button class="dir-opt dep" onclick="goCreate('departure')">
+          <span class="dir-opt-ico"><svg width="26" height="26" fill="none" viewBox="0 0 24 24"><path d="M5 5h14M12 20v-9m0 0l-4 4m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="dir-opt-t" id="m-dep">مغادرة</span><span class="dir-opt-s">Departure</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="nav.js?v=15"></script>
+<script>
+let lang = localStorage.getItem('lang') || 'en';
+
+const T = {
+  ar: {
+    title:'الرئيسية', sub:'إنشاء التقارير ومتابعة حالتها',
+    eyebrow:'تقرير جديد', create:'إنشاء تقرير',
+    h_title:'تقرير مناولة الرحلات',
+    h_sub:'ابدأ تقريراً جديداً لمناولة رحلة (وصول أو مغادرة). يُحفظ تلقائياً كمسودة قابلة للتعديل خلال ٢٤ ساعة قبل اعتماده.',
+    qa:'الوصول السريع',
+    pending:'بانتظار الموافقة', drafts:'المسودات', returned:'التقارير المُعادة', approved:'التقارير المعتمدة',
+    arrival:'وصول', departure:'مغادرة', pick:'اختر نوع التقرير',
+    c_eyebrow:'نموذج جديد', c_title:'نموذج التنسيق',
+    c_sub:'ابدأ نموذج تنسيق جديد (Coordination Sheet / Time Chart) لمتابعة أنشطة مناولة الرحلة وأوقاتها المخططة والفعلية.',
+    c_create:'إنشاء نموذج',
+    nothing:'لا توجد إجراءات متاحة لدورك',
+  },
+  en: {
+    title:'Home', sub:'Create reports and track their status',
+    eyebrow:'New Report', create:'Create Report',
+    h_title:'Flight Handling Report',
+    h_sub:'Start a new flight handling report (Arrival or Departure). Auto-saved as a draft, editable for 24 hours before approval.',
+    qa:'Quick Access',
+    pending:'Pending Approval', drafts:'Drafts', returned:'Returned Reports', approved:'Approved Reports',
+    arrival:'Arrival', departure:'Departure', pick:'Select report type',
+    c_eyebrow:'New Sheet', c_title:'Coordination Sheet',
+    c_sub:'Start a new Coordination Sheet / Time Chart to track flight handling activities and their planned versus actual times.',
+    c_create:'Create Sheet',
+    nothing:'No actions available for your role',
+  },
+};
+
+const CARDS = [
+  { key:'pending',  perm:'reports.pending',  href:'pending.html',  color:'var(--orange)', bg:'var(--orangel)', icon:'<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' },
+  { key:'drafts',   perm:'reports.drafts',   href:'drafts.html',   color:'var(--gold)',   bg:'var(--goldl)',   icon:'<path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>' },
+  { key:'returned', perm:'reports.returned', href:'returned.html', color:'#DC2626',       bg:'#FEF2F2',        icon:'<path d="M9 14L4 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h11a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' },
+  { key:'approved', perm:'reports.approved', href:'approved.html', color:'#16A34A',       bg:'#DCFCE7',        icon:'<path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' },
+];
+
+let COUNTS = { pending:0, drafts:0, returned:0, approved:0 };
+
+// الصلاحيات من nav.js نفسه — لا قراءة ثانية من localStorage
+const can = pm => !!(window.SGS && SGS.can ? SGS.can(pm) : false);
+const visibleCards = () => CARDS.filter(c => can(c.perm));
+
+async function apiGet(path) {
+  const res = await fetch(`${SGS.API}${path}`, { headers: SGS.H() });
+  if (res.status === 401) { localStorage.clear(); location.href = 'index.html'; return null; }
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+// حالة الخادم المقابلة لكل بطاقة
+const CARD_STATUS = { pending:'submitted', drafts:'draft', returned:'returned', approved:'approved' };
+
+async function loadCounts() {
+  // لا تُجلب إلا أعداد البطاقات التي يراها المستخدم فعلًا
+  const cards = visibleCards();
+  const res = await Promise.all(cards.map(c =>
+    apiGet(`/reports?status=${CARD_STATUS[c.key]}&page=1&pageSize=1`).catch(() => null)));
+  COUNTS = {};
+  cards.forEach((c, i) => { COUNTS[c.key] = (res[i] && res[i].total) || 0; });
+}
+
+function renderCards() {
+  const t = T[lang];
+  const cards = visibleCards();
+  const showHeroA = can('reports.create');
+  const showHeroB = can('coordination.create');
+
+  // البطلان: كلٌّ بصلاحيته، والصفّ كاملًا إن غابا معًا
+  const heroA = document.getElementById('hero-report');
+  const heroB = document.getElementById('hero-coord');
+  const heroRow = document.getElementById('hero-row');
+  if (heroA)   heroA.style.display   = showHeroA ? '' : 'none';
+  if (heroB)   heroB.style.display   = showHeroB ? '' : 'none';
+  if (heroRow) heroRow.style.display = (showHeroA || showHeroB) ? '' : 'none';
+
+  // عنوان الوصول السريع يختفي إن لم تبقَ بطاقة
+  document.getElementById('qa-head').style.display = cards.length ? '' : 'none';
+
+  // لا بطاقات ولا بطلين ⇒ رسالة بدل صفحة فارغة
+  const none = document.getElementById('qa-none');
+  const empty = !cards.length && !showHeroA && !showHeroB;
+  if (none) { none.style.display = empty ? '' : 'none'; none.textContent = t.nothing; }
+
+  document.getElementById('qa-grid').innerHTML = cards.map(c => `
+    <a class="qa-card" href="${c.href}" style="--qa-color:${c.color};--qa-bg:${c.bg};">
+      <div class="qa-ico"><svg width="22" height="22" fill="none" viewBox="0 0 24 24">${c.icon}</svg></div>
+      <div class="qa-info">
+        <div class="qa-count">${SGS.fmt(COUNTS[c.key])}</div>
+        <div class="qa-label">${t[c.key]}</div>
+      </div>
+      <div class="qa-arrow"><svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </a>`).join('');
+}
+
+/* ── إنشاء تقرير ── */
+function createReport(){ document.getElementById('dir-overlay').classList.add('show'); }
+function closeDir(){ document.getElementById('dir-overlay').classList.remove('show'); }
+function goCreate(dir){ location.href = `report_form.html?dir=${dir}`; }
+function goCoordination(){ location.href = 'coordination_form.html'; }
+
+let toastTimer;
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2600); }
+
+function setLang(l) {
+  lang = l;
+  const t = T[l];
+  const set = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('t-title',t.title); set('t-sub',t.sub);
+  set('h-eyebrow',t.eyebrow); set('h-create',t.create); set('h-title',t.h_title); set('h-sub',t.h_sub);
+  set('qa-head',t.qa);
+  set('hc-eyebrow',t.c_eyebrow); set('hc-title',t.c_title); set('hc-sub',t.c_sub); set('hc-create',t.c_create);
+  set('m-title',t.pick); set('m-arr',t.arrival); set('m-dep',t.departure);
+  renderCards();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('t-station').textContent = (window.SGS && SGS.airportName) ? SGS.airportName : '—';
+  try { await loadCounts(); } catch(e) {}
+  setLang(lang);
+});
+</script>
+</body>
+</html>

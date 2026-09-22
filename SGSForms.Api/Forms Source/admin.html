@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGS Forms — الإدارة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="Themes.css?v=9">
+<style>
+.act-link{ display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:8px; border:1.5px solid var(--bd); background:var(--w); color:var(--mu); cursor:pointer; text-decoration:none; font-family:'Tajawal',sans-serif; font-size:11px; font-weight:700; transition:all .15s; }
+.act-link:hover{ background:var(--gl); color:var(--g); border-color:var(--g); }
+.act-link.del:hover{ background:var(--redl); color:var(--red); border-color:var(--red); }
+.act-link.off{ opacity:.4; pointer-events:none; }
+#toast{ position:fixed; inset-inline-end:20px; bottom:20px; z-index:1100; background:var(--tx); color:#fff; padding:13px 18px; border-radius:12px; font-size:13px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.25); display:flex; align-items:center; gap:9px; transform:translateY(160%); opacity:0; transition:all .3s cubic-bezier(.34,1.56,.64,1); }
+#toast.show{ transform:translateY(0); opacity:1; }
+
+/* ── شريط التبويبات ── */
+.tabs{ display:flex; gap:6px; margin-bottom:18px; border-bottom:2px solid var(--bd); }
+.tab{ padding:10px 20px; border:none; background:none; cursor:pointer; font-family:'Tajawal',sans-serif; font-size:13px; font-weight:700; color:var(--mu); border-bottom:3px solid transparent; margin-bottom:-2px; transition:all .15s; }
+.tab:hover{ color:var(--g); }
+.tab.on{ color:var(--g); border-bottom-color:var(--g); }
+.pane{ display:none; }
+.pane.on{ display:block; }
+
+/* ── مصفوفة الصلاحيات ── */
+.pm-group{ margin-bottom:16px; }
+.pm-group-h{ font-size:12px; font-weight:800; color:var(--g); margin-bottom:8px; padding-bottom:5px; border-bottom:1px solid var(--bd); display:flex; align-items:center; justify-content:space-between; }
+.pm-all{ font-size:10px; font-weight:700; color:var(--mu); cursor:pointer; background:none; border:1px solid var(--bd); border-radius:6px; padding:2px 8px; font-family:'Tajawal',sans-serif; }
+.pm-all:hover{ color:var(--g); border-color:var(--g); }
+.pm-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(215px,1fr)); gap:7px; }
+.pm-item{ display:flex; align-items:center; gap:8px; padding:7px 10px; border:1.5px solid var(--bd); border-radius:9px; cursor:pointer; font-size:12px; font-weight:600; transition:all .12s; }
+.pm-item:hover{ border-color:var(--g); background:var(--gl); }
+.pm-item input{ width:15px; height:15px; accent-color:var(--g); cursor:pointer; flex-shrink:0; }
+.pm-item.checked{ border-color:var(--g); background:var(--gl); color:var(--g); }
+.pm-locked{ opacity:.6; pointer-events:none; }
+.lock-note{ background:var(--goldl,#FDF8EE); border:1.5px solid var(--gold,#C9A84C); color:#7a5c00; border-radius:10px; padding:10px 13px; font-size:12px; font-weight:600; margin-bottom:14px; display:none; }
+.lock-note.show{ display:block; }
+.modal.wide{ max-width:760px; }
+.swatch{ display:inline-block; width:13px; height:13px; border-radius:4px; vertical-align:-2px; margin-inline-end:6px; }
+</style>
+</head>
+<body>
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-l">
+      <div class="pg-title" id="t-title">الإدارة</div>
+      <div class="pg-sub"><span class="dot"></span><span id="t-sub">المستخدمون والأدوار والمطارات</span></div>
+    </div>
+    <div class="topbar-r">
+      <button class="btn-primary" id="add-btn" onclick="onAdd()">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        <span id="add-l">إضافة مستخدم</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" id="tab-users"    onclick="showTab('users')">المستخدمون</button>
+    <button class="tab"    id="tab-roles"    onclick="showTab('roles')">الأدوار</button>
+    <button class="tab"    id="tab-stations" onclick="showTab('stations')">المطارات</button>
+  </div>
+
+  <div class="alt alt-er" id="err-alert"><span id="err-txt"></span></div>
+
+  <!-- ══ المستخدمون ══ -->
+  <div class="pane on" id="pane-users">
+    <div class="card"><div class="card-body-np">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th id="c-name">الاسم</th><th id="c-email">البريد الإلكتروني</th><th id="c-role">الدور</th>
+            <th id="c-station">المحطة</th><th id="c-status">الحالة</th><th id="c-actions" style="text-align:center;">إجراءات</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="empty" style="display:none;"><div class="empty-icon">👥</div><span id="empty-txt">لا يوجد مستخدمون</span></div>
+    </div></div>
+  </div>
+
+  <!-- ══ الأدوار ══ -->
+  <div class="pane" id="pane-roles">
+    <div class="card"><div class="card-body-np">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th id="rc-name">الدور</th><th id="rc-key">المفتاح</th><th id="rc-perms">الصلاحيات</th>
+            <th id="rc-users">المستخدمون</th><th id="rc-status">الحالة</th><th id="rc-actions" style="text-align:center;">إجراءات</th>
+          </tr></thead>
+          <tbody id="role-rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="role-empty" style="display:none;"><div class="empty-icon">🛡️</div><span id="role-empty-txt">لا توجد أدوار</span></div>
+    </div></div>
+  </div>
+
+  <!-- ══ المطارات ══ -->
+  <div class="pane" id="pane-stations">
+    <div class="card"><div class="card-body-np">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th id="sc-code">الرمز</th><th id="sc-ar">الاسم بالعربية</th><th id="sc-en">الاسم بالإنجليزية</th>
+            <th id="sc-status">الحالة</th><th id="sc-actions" style="text-align:center;">إجراءات</th>
+          </tr></thead>
+          <tbody id="station-rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="station-empty" style="display:none;"><div class="empty-icon">🛫</div><span id="station-empty-txt">لا توجد مطارات</span></div>
+    </div></div>
+  </div>
+</main>
+
+<!-- مودال إضافة/تعديل مستخدم -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-h">
+      <div class="modal-t" id="m-title">إضافة مستخدم</div>
+      <button class="modal-x" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-b">
+      <div class="modal-err" id="m-err"><span id="m-err-txt"></span></div>
+      <div class="field"><label id="l-name">الاسم <span>*</span></label><input type="text" id="f-name"></div>
+      <div class="field"><label id="l-email">البريد الإلكتروني <span>*</span></label><input type="email" id="f-email"></div>
+      <div class="field"><label id="l-pass" >كلمة المرور <span>*</span></label><input type="password" id="f-pass"><div class="hint" id="pass-hint">اتركها فارغة للإبقاء على كلمة المرور الحالية</div></div>
+      <div class="field"><label id="l-frole">الدور <span>*</span></label>
+        <select id="f-role" onchange="onRoleChange()"></select>
+      </div>
+      <div class="field" id="station-field"><label id="l-fstation">المحطة <span>*</span></label>
+        <select id="f-station"></select>
+        <div class="hint" id="station-hint"></div>
+      </div>
+      <div class="field"><label id="l-active">الحالة</label>
+        <select id="f-active"><option value="true">نشط</option><option value="false">معطّل</option></select>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-g" onclick="closeModal()" id="cancel-l">إلغاء</button>
+      <button class="btn-primary" onclick="saveUser()" id="save-l">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- مودال الدور -->
+<div class="overlay" id="r-overlay" onclick="if(event.target===this)closeRoleModal()">
+  <div class="modal wide">
+    <div class="modal-h">
+      <div class="modal-t" id="rm-title">إضافة دور</div>
+      <button class="modal-x" onclick="closeRoleModal()">&times;</button>
+    </div>
+    <div class="modal-b">
+      <div class="modal-err" id="rm-err"><span id="rm-err-txt"></span></div>
+      <div class="lock-note" id="rm-lock">هذا دور نظامي مقفل: يمكن تعديل التسمية واللون فقط، وصلاحياته محمية حتى لا يُقفل النظام على الجميع.</div>
+      <div class="field" id="rm-key-field"><label id="rl-key">المفتاح <span>*</span></label>
+        <input type="text" id="rf-key" placeholder="handling_supervisor">
+        <div class="hint" id="rm-key-hint">حروف إنجليزية صغيرة وأرقام وشرطة سفلية — لا يمكن تغييره بعد الإنشاء</div>
+      </div>
+      <div class="field"><label id="rl-ar">الاسم بالعربية <span>*</span></label><input type="text" id="rf-ar"></div>
+      <div class="field"><label id="rl-en">الاسم بالإنجليزية <span>*</span></label><input type="text" id="rf-en"></div>
+      <div class="field"><label id="rl-color">اللون</label><input type="color" id="rf-color" value="#006C4E" style="height:40px;padding:4px;"></div>
+      <div class="field"><label id="rl-active">الحالة</label>
+        <select id="rf-active"><option value="true">نشط</option><option value="false">معطّل</option></select>
+      </div>
+      <div class="field"><label id="rl-perms">الصلاحيات</label><div id="rf-perms"></div></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-g" onclick="closeRoleModal()" id="r-cancel-l">إلغاء</button>
+      <button class="btn-primary" onclick="saveRole()" id="r-save-l">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- مودال المطار -->
+<div class="overlay" id="s-overlay" onclick="if(event.target===this)closeStationModal()">
+  <div class="modal">
+    <div class="modal-h">
+      <div class="modal-t" id="sm-title">إضافة مطار</div>
+      <button class="modal-x" onclick="closeStationModal()">&times;</button>
+    </div>
+    <div class="modal-b">
+      <div class="modal-err" id="sm-err"><span id="sm-err-txt"></span></div>
+      <div class="field"><label id="sl-code">الرمز <span>*</span></label>
+        <input type="text" id="sf-code" maxlength="3" placeholder="RUH" style="text-transform:uppercase;font-family:'DM Mono',monospace;">
+        <div class="hint" id="sm-code-hint">ثلاثة أحرف إنجليزية (IATA)</div>
+      </div>
+      <div class="field"><label id="sl-ar">الاسم بالعربية <span>*</span></label><input type="text" id="sf-ar"></div>
+      <div class="field"><label id="sl-en">الاسم بالإنجليزية <span>*</span></label><input type="text" id="sf-en"></div>
+      <div class="field"><label id="sl-active">الحالة</label>
+        <select id="sf-active"><option value="true">نشط</option><option value="false">معطّل</option></select>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-g" onclick="closeStationModal()" id="s-cancel-l">إلغاء</button>
+      <button class="btn-primary" onclick="saveStation()" id="s-save-l">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="nav.js?v=15"></script>
+<script>
+let lang = localStorage.getItem('lang') || 'en';
+let USERS = [], STATIONS = [], ROLES = [], CATALOG = [];
+let editId = null, roleEditId = null, stationEditId = null, curTab = 'users';
+
+// الصلاحيات من nav.js نفسه — مصدر واحد مع القائمة الجانبية
+const can = p => SGS.can(p);
+// لون الدور يدخل style — يُقبل #RRGGBB فقط
+const color = c => /^#[0-9A-Fa-f]{6}$/.test(c || '') ? c : '#64748B';
+
+const T = {
+  ar: {
+    title:'الإدارة', sub:'المستخدمون والأدوار والمطارات',
+    tab_users:'المستخدمون', tab_roles:'الأدوار', tab_stations:'المطارات',
+    add_user:'إضافة مستخدم', add_role:'إضافة دور', add_station:'إضافة مطار',
+    c_name:'الاسم', c_email:'البريد الإلكتروني', c_role:'الدور', c_station:'المحطة', c_status:'الحالة', c_actions:'إجراءات',
+    empty:'لا يوجد مستخدمون', edit:'تعديل', del:'حذف', activate:'تفعيل', deactivate:'تعطيل',
+    active:'نشط', inactive:'معطّل', none:'—',
+    m_add:'إضافة مستخدم', m_edit:'تعديل مستخدم', l_name:'الاسم', l_email:'البريد الإلكتروني',
+    l_pass:'كلمة المرور', pass_hint:'اتركها فارغة للإبقاء على كلمة المرور الحالية',
+    l_role:'الدور', l_station:'المحطة',
+    station_hint_all:'يرى كل المحطات — اتركه فارغًا، أو اختر محطة ليُقصر عليها',
+    station_hint_one:'مطلوب — المستخدم محصور بمحطته',
+    l_active:'الحالة', cancel:'إلغاء', save:'حفظ',
+    saved:'تم الحفظ بنجاح', deleted:'تم تعطيل المستخدم',
+    err_req:'يرجى تعبئة الاسم والبريد', err_pass:'كلمة المرور مطلوبة عند الإنشاء',
+    // الأدوار
+    rc_name:'الدور', rc_key:'المفتاح', rc_perms:'الصلاحيات', rc_users:'المستخدمون', rc_status:'الحالة', rc_actions:'إجراءات',
+    role_empty:'لا توجد أدوار', rm_add:'إضافة دور', rm_edit:'تعديل دور',
+    rl_key:'المفتاح', rl_ar:'الاسم بالعربية', rl_en:'الاسم بالإنجليزية', rl_color:'اللون', rl_active:'الحالة', rl_perms:'الصلاحيات',
+    rm_key_hint:'حروف إنجليزية صغيرة وأرقام وشرطة سفلية — لا يمكن تغييره بعد الإنشاء',
+    rm_lock:'هذا دور نظامي مقفل: يمكن تعديل التسمية واللون فقط، وصلاحياته محمية حتى لا يُقفل النظام على الجميع.',
+    sys:'نظامي', locked:'مقفل', pm_all:'الكل', role_saved:'تم حفظ الدور', role_deleted:'تم حذف الدور',
+    err_role_req:'المفتاح والاسمان مطلوبة',
+    confirm_role:'حذف هذا الدور نهائيًا؟',
+    n_perms:n => `${n} صلاحية`, n_users:n => `${n}`,
+    // المطارات
+    sc_code:'الرمز', sc_ar:'الاسم بالعربية', sc_en:'الاسم بالإنجليزية', sc_status:'الحالة', sc_actions:'إجراءات',
+    station_empty:'لا توجد مطارات', sm_add:'إضافة مطار', sm_edit:'تعديل مطار',
+    sl_code:'الرمز', sl_ar:'الاسم بالعربية', sl_en:'الاسم بالإنجليزية', sl_active:'الحالة',
+    sm_code_hint:'ثلاثة أحرف إنجليزية (IATA)',
+    station_saved:'تم حفظ المطار', station_deleted:'تم حذف المطار',
+    err_station_req:'الرمز والاسمان مطلوبة', confirm_station:'حذف هذا المطار نهائيًا؟',
+  },
+  en: {
+    title:'Administration', sub:'Users, roles and stations',
+    tab_users:'Users', tab_roles:'Roles', tab_stations:'Stations',
+    add_user:'Add User', add_role:'Add Role', add_station:'Add Station',
+    c_name:'Name', c_email:'Email', c_role:'Role', c_station:'Station', c_status:'Status', c_actions:'Actions',
+    empty:'No users', edit:'Edit', del:'Delete', activate:'Activate', deactivate:'Deactivate',
+    active:'Active', inactive:'Inactive', none:'—',
+    m_add:'Add User', m_edit:'Edit User', l_name:'Name', l_email:'Email',
+    l_pass:'Password', pass_hint:'Leave empty to keep the current password',
+    l_role:'Role', l_station:'Station',
+    station_hint_all:'Sees all stations — leave empty, or pick one to restrict',
+    station_hint_one:'Required — the user is limited to their station',
+    l_active:'Status', cancel:'Cancel', save:'Save',
+    saved:'Saved successfully', deleted:'User deactivated',
+    err_req:'Please fill name and email', err_pass:'Password is required on creation',
+    rc_name:'Role', rc_key:'Key', rc_perms:'Permissions', rc_users:'Users', rc_status:'Status', rc_actions:'Actions',
+    role_empty:'No roles', rm_add:'Add Role', rm_edit:'Edit Role',
+    rl_key:'Key', rl_ar:'Arabic name', rl_en:'English name', rl_color:'Colour', rl_active:'Status', rl_perms:'Permissions',
+    rm_key_hint:'Lowercase letters, digits and underscore — cannot be changed later',
+    rm_lock:'This is a locked system role: only its name and colour can change. Its permissions are protected so the system can never be locked out.',
+    sys:'System', locked:'Locked', pm_all:'All', role_saved:'Role saved', role_deleted:'Role deleted',
+    err_role_req:'Key and both names are required',
+    confirm_role:'Delete this role permanently?',
+    n_perms:n => `${n} permissions`, n_users:n => `${n}`,
+    sc_code:'Code', sc_ar:'Arabic name', sc_en:'English name', sc_status:'Status', sc_actions:'Actions',
+    station_empty:'No stations', sm_add:'Add Station', sm_edit:'Edit Station',
+    sl_code:'Code', sl_ar:'Arabic name', sl_en:'English name', sl_active:'Status',
+    sm_code_hint:'Three letters (IATA)',
+    station_saved:'Station saved', station_deleted:'Station deleted',
+    err_station_req:'Code and both names are required', confirm_station:'Delete this station permanently?',
+  },
+};
+
+async function api(path, opts) {
+  const res = await fetch(`${SGS.API}${path}`, opts || { headers: SGS.H() });
+  if (res.status === 401) { localStorage.clear(); location.href = 'index.html'; return null; }
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || ('HTTP ' + res.status)); }
+  return res.status === 204 ? null : res.json();
+}
+
+async function loadAll() {
+  const jobs = [
+    can('admin.users')    ? api('/users') : Promise.resolve([]),
+    api('/stations?includeInactive=true'),
+    (can('admin.roles') || can('admin.users')) ? api('/roles') : Promise.resolve([]),
+    can('admin.roles')    ? api('/roles/permissions') : Promise.resolve([]),
+  ];
+  const [u, s, r, c] = await Promise.all(jobs);
+  USERS = u || []; STATIONS = s || []; ROLES = r || []; CATALOG = c || [];
+}
+
+/* ═══════════ التبويبات ═══════════ */
+function showTab(name) {
+  curTab = name;
+  ['users','roles','stations'].forEach(n => {
+    const tb = document.getElementById('tab-' + n), pn = document.getElementById('pane-' + n);
+    if (tb) tb.classList.toggle('on', n === name);
+    if (pn) pn.classList.toggle('on', n === name);
+  });
+  const t = T[lang];
+  const btn = document.getElementById('add-btn');
+  const lbl = document.getElementById('add-l');
+  const allowed = name === 'users' ? can('admin.users')
+                : name === 'roles' ? can('admin.roles')
+                : can('admin.stations');
+  btn.style.display = allowed ? '' : 'none';
+  lbl.textContent = name === 'users' ? t.add_user : name === 'roles' ? t.add_role : t.add_station;
+}
+
+function onAdd() {
+  if (curTab === 'users') openModal();
+  else if (curTab === 'roles') openRoleModal();
+  else openStationModal();
+}
+
+/* ═══════════ المستخدمون ═══════════ */
+function roleLabel(key) {
+  const r = ROLES.find(x => x.key === key);
+  if (!r) return key;
+  return lang === 'ar' ? r.nameAr : r.nameEn;
+}
+function roleColor(key) {
+  const r = ROLES.find(x => x.key === key);
+  return color(r ? r.color : '');
+}
+
+function renderTable() {
+  const t = T[lang];
+  const tbody = document.getElementById('rows');
+  if (!USERS.length) { tbody.innerHTML = ''; document.getElementById('empty').style.display = 'block'; return; }
+  document.getElementById('empty').style.display = 'none';
+  // المعالجات تمرّر رقم السجل فقط، ويُجلب الكائن من المصفوفة — لا بيانات داخل onclick
+  tbody.innerHTML = USERS.map(u => `
+    <tr>
+      <td style="font-weight:700;">${esc(u.name)}</td>
+      <td style="font-family:'DM Mono',monospace;">${esc(u.email)}</td>
+      <td><span class="swatch" style="background:${roleColor(u.role)}"></span>${esc(roleLabel(u.role))}</td>
+      <td>${esc(u.stationCode || t.none)}</td>
+      <td><span class="bdg ${u.isActive ? 's-yes' : 's-no'}">${u.isActive ? t.active : t.inactive}</span></td>
+      <td style="text-align:center;white-space:nowrap;">
+        <a class="act-link" href="javascript:void(0)" onclick="openModal(USERS.find(x => x.id === ${Number(u.id)}))">${t.edit}</a>
+        ${u.isActive ? `<a class="act-link del" href="javascript:void(0)" onclick="deactivate(${Number(u.id)})">${t.deactivate}</a>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+function fillStations() {
+  const sel = document.getElementById('f-station');
+  const t = T[lang];
+  sel.innerHTML = `<option value="">${t.none}</option>` +
+    STATIONS.filter(s => s.isActive).map(s =>
+      `<option value="${Number(s.id)}">${esc(s.code)} — ${esc(lang === 'ar' ? s.nameAr : s.nameEn)}</option>`).join('');
+}
+
+function fillRoleOptions() {
+  const sel = document.getElementById('f-role');
+  sel.innerHTML = ROLES.filter(r => r.isActive)
+    .map(r => `<option value="${esc(r.key)}">${esc(lang === 'ar' ? r.nameAr : r.nameEn)}</option>`).join('');
+}
+
+// المحطة تضيّق النطاق: من يملك stations.viewAll ولم تُسنَد له محطة يرى الكل
+function onRoleChange() {
+  const key = document.getElementById('f-role').value;
+  const r = ROLES.find(x => x.key === key);
+  const seesAll = r ? (r.permissions || []).includes('stations.viewAll') : false;
+  const hint = document.getElementById('station-hint');
+  if (hint) hint.textContent = seesAll ? T[lang].station_hint_all : T[lang].station_hint_one;
+}
+
+function openModal(u) {
+  const t = T[lang];
+  editId = u ? u.id : null;
+  document.getElementById('m-title').textContent = u ? t.m_edit : t.m_add;
+  document.getElementById('m-err').classList.remove('show');
+  fillStations(); fillRoleOptions();
+  document.getElementById('f-name').value = u ? u.name : '';
+  document.getElementById('f-email').value = u ? u.email : '';
+  document.getElementById('f-pass').value = '';
+  document.getElementById('f-role').value = u ? u.role : (ROLES[0] ? ROLES[0].key : '');
+  document.getElementById('f-station').value = u && u.stationId ? u.stationId : '';
+  document.getElementById('f-active').value = u ? String(u.isActive) : 'true';
+  document.getElementById('pass-hint').style.display = u ? 'block' : 'none';
+  onRoleChange();
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal() { document.getElementById('overlay').classList.remove('show'); }
+
+async function saveUser() {
+  const t = T[lang];
+  const name = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const pass = document.getElementById('f-pass').value;
+  const role = document.getElementById('f-role').value;
+  const stationVal = document.getElementById('f-station').value;
+  const isActive = document.getElementById('f-active').value === 'true';
+  const mErr = m => { document.getElementById('m-err-txt').textContent = m; document.getElementById('m-err').classList.add('show'); };
+
+  if (!name || !email) return mErr(t.err_req);
+  if (!editId && !pass) return mErr(t.err_pass);
+
+  const body = { name, email, role, isActive, stationId: stationVal ? parseInt(stationVal, 10) : null };
+  if (pass) body.password = pass;
+
+  try {
+    if (editId) await api(`/users/${editId}`, { method: 'PUT', headers: SGS.HJ(), body: JSON.stringify(body) });
+    else await api('/users', { method: 'POST', headers: SGS.HJ(), body: JSON.stringify(body) });
+    closeModal();
+    await loadAll(); renderAll();
+    toast(t.saved);
+  } catch (e) { mErr(e.message); }
+}
+
+async function deactivate(id) {
+  try {
+    await api(`/users/${id}`, { method: 'DELETE', headers: SGS.H() });
+    await loadAll(); renderAll();
+    toast(T[lang].deleted);
+  } catch (e) { showErr(e.message); }
+}
+
+/* ═══════════ الأدوار ═══════════ */
+function renderRoles() {
+  const t = T[lang];
+  const tbody = document.getElementById('role-rows');
+  if (!ROLES.length) { tbody.innerHTML = ''; document.getElementById('role-empty').style.display = 'block'; return; }
+  document.getElementById('role-empty').style.display = 'none';
+  const editable = can('admin.roles');
+  tbody.innerHTML = ROLES.map(r => `
+    <tr>
+      <td style="font-weight:700;"><span class="swatch" style="background:${color(r.color)}"></span>${esc(lang === 'ar' ? r.nameAr : r.nameEn)}
+        ${r.isLocked ? `<span class="bdg" style="margin-inline-start:6px;">${t.locked}</span>`
+                     : r.isSystem ? `<span class="bdg" style="margin-inline-start:6px;">${t.sys}</span>` : ''}</td>
+      <td style="font-family:'DM Mono',monospace;">${esc(r.key)}</td>
+      <td>${t.n_perms(r.permissions.length)}</td>
+      <td style="font-family:'DM Mono',monospace;">${Number(r.userCount)}</td>
+      <td><span class="bdg ${r.isActive ? 's-yes' : 's-no'}">${r.isActive ? t.active : t.inactive}</span></td>
+      <td style="text-align:center;white-space:nowrap;">
+        <a class="act-link ${editable ? '' : 'off'}" href="javascript:void(0)" onclick="openRoleModal(ROLES.find(x => x.id === ${Number(r.id)}))">${t.edit}</a>
+        ${(!r.isSystem && r.userCount === 0 && editable)
+          ? `<a class="act-link del" href="javascript:void(0)" onclick="deleteRole(${Number(r.id)})">${t.del}</a>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+function renderPermMatrix(selected, locked) {
+  const box = document.getElementById('rf-perms');
+  const groups = [];
+  CATALOG.forEach(p => {
+    let g = groups.find(x => x.key === p.group);
+    if (!g) { g = { key: p.group, ar: p.groupAr, en: p.groupEn, items: [] }; groups.push(g); }
+    g.items.push(p);
+  });
+  const sel = new Set(selected || []);
+  box.className = locked ? 'pm-locked' : '';
+  box.innerHTML = groups.map(g => `
+    <div class="pm-group">
+      <div class="pm-group-h"><span>${lang === 'ar' ? g.ar : g.en}</span>
+        ${locked ? '' : `<button type="button" class="pm-all" onclick="toggleGroup('${g.key}')">${T[lang].pm_all}</button>`}</div>
+      <div class="pm-grid">
+        ${g.items.map(p => `
+          <label class="pm-item ${sel.has(p.key) ? 'checked' : ''}" data-group="${g.key}">
+            <input type="checkbox" value="${p.key}" ${sel.has(p.key) ? 'checked' : ''} ${locked ? 'disabled' : ''}
+                   onchange="this.closest('.pm-item').classList.toggle('checked', this.checked)">
+            <span>${lang === 'ar' ? p.nameAr : p.nameEn}</span>
+          </label>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleGroup(key) {
+  const items = [...document.querySelectorAll(`#rf-perms .pm-item[data-group="${key}"]`)];
+  const allOn = items.every(i => i.querySelector('input').checked);
+  items.forEach(i => {
+    const cb = i.querySelector('input');
+    cb.checked = !allOn;
+    i.classList.toggle('checked', cb.checked);
+  });
+}
+
+function openRoleModal(r) {
+  const t = T[lang];
+  roleEditId = r ? r.id : null;
+  document.getElementById('rm-title').textContent = r ? t.rm_edit : t.rm_add;
+  document.getElementById('rm-err').classList.remove('show');
+  document.getElementById('rm-lock').classList.toggle('show', !!(r && r.isLocked));
+  document.getElementById('rm-key-field').style.display = r ? 'none' : '';
+  document.getElementById('rf-key').value = '';
+  document.getElementById('rf-ar').value = r ? r.nameAr : '';
+  document.getElementById('rf-en').value = r ? r.nameEn : '';
+  document.getElementById('rf-color').value = r ? color(r.color) : '#006C4E';
+  document.getElementById('rf-active').value = r ? String(r.isActive) : 'true';
+  document.getElementById('rf-active').disabled = !!(r && r.isLocked);
+  renderPermMatrix(r ? r.permissions : [], !!(r && r.isLocked));
+  document.getElementById('r-overlay').classList.add('show');
+}
+function closeRoleModal() { document.getElementById('r-overlay').classList.remove('show'); }
+
+async function saveRole() {
+  const t = T[lang];
+  const mErr = m => { document.getElementById('rm-err-txt').textContent = m; document.getElementById('rm-err').classList.add('show'); };
+  const nameAr = document.getElementById('rf-ar').value.trim();
+  const nameEn = document.getElementById('rf-en').value.trim();
+  const key = document.getElementById('rf-key').value.trim();
+  if (!nameAr || !nameEn || (!roleEditId && !key)) return mErr(t.err_role_req);
+
+  const permissions = [...document.querySelectorAll('#rf-perms input:checked')].map(i => i.value);
+  const body = {
+    nameAr, nameEn,
+    color: document.getElementById('rf-color').value,
+    isActive: document.getElementById('rf-active').value === 'true',
+    permissions,
+  };
+  if (!roleEditId) body.key = key;
+
+  try {
+    if (roleEditId) await api(`/roles/${roleEditId}`, { method: 'PUT', headers: SGS.HJ(), body: JSON.stringify(body) });
+    else await api('/roles', { method: 'POST', headers: SGS.HJ(), body: JSON.stringify(body) });
+    closeRoleModal();
+    await loadAll(); renderAll();
+    toast(t.role_saved);
+  } catch (e) { mErr(e.message); }
+}
+
+async function deleteRole(id) {
+  if (!confirm(T[lang].confirm_role)) return;
+  try {
+    await api(`/roles/${id}`, { method: 'DELETE', headers: SGS.H() });
+    await loadAll(); renderAll();
+    toast(T[lang].role_deleted);
+  } catch (e) { showErr(e.message); }
+}
+
+/* ═══════════ المطارات ═══════════ */
+function renderStations() {
+  const t = T[lang];
+  const tbody = document.getElementById('station-rows');
+  if (!STATIONS.length) { tbody.innerHTML = ''; document.getElementById('station-empty').style.display = 'block'; return; }
+  document.getElementById('station-empty').style.display = 'none';
+  const editable = can('admin.stations');
+  tbody.innerHTML = STATIONS.map(s => `
+    <tr>
+      <td style="font-family:'DM Mono',monospace;font-weight:700;">${esc(s.code)}</td>
+      <td>${esc(s.nameAr)}</td>
+      <td>${esc(s.nameEn)}</td>
+      <td><span class="bdg ${s.isActive ? 's-yes' : 's-no'}">${s.isActive ? t.active : t.inactive}</span></td>
+      <td style="text-align:center;white-space:nowrap;">
+        <a class="act-link ${editable ? '' : 'off'}" href="javascript:void(0)" onclick="openStationModal(STATIONS.find(x => x.id === ${Number(s.id)}))">${t.edit}</a>
+        ${editable ? `<a class="act-link del" href="javascript:void(0)" onclick="deleteStation(${Number(s.id)})">${t.del}</a>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+function openStationModal(s) {
+  const t = T[lang];
+  stationEditId = s ? s.id : null;
+  document.getElementById('sm-title').textContent = s ? t.sm_edit : t.sm_add;
+  document.getElementById('sm-err').classList.remove('show');
+  document.getElementById('sf-code').value = s ? s.code : '';
+  document.getElementById('sf-code').disabled = false;
+  document.getElementById('sf-ar').value = s ? s.nameAr : '';
+  document.getElementById('sf-en').value = s ? s.nameEn : '';
+  document.getElementById('sf-active').value = s ? String(s.isActive) : 'true';
+  document.getElementById('s-overlay').classList.add('show');
+}
+function closeStationModal() { document.getElementById('s-overlay').classList.remove('show'); }
+
+async function saveStation() {
+  const t = T[lang];
+  const mErr = m => { document.getElementById('sm-err-txt').textContent = m; document.getElementById('sm-err').classList.add('show'); };
+  const code = document.getElementById('sf-code').value.trim().toUpperCase();
+  const nameAr = document.getElementById('sf-ar').value.trim();
+  const nameEn = document.getElementById('sf-en').value.trim();
+  if (!code || !nameAr || !nameEn) return mErr(t.err_station_req);
+  const body = { code, nameAr, nameEn, isActive: document.getElementById('sf-active').value === 'true' };
+  try {
+    if (stationEditId) await api(`/stations/${stationEditId}`, { method: 'PUT', headers: SGS.HJ(), body: JSON.stringify(body) });
+    else await api('/stations', { method: 'POST', headers: SGS.HJ(), body: JSON.stringify(body) });
+    closeStationModal();
+    await loadAll(); renderAll();
+    toast(t.station_saved);
+  } catch (e) { mErr(e.message); }
+}
+
+async function deleteStation(id) {
+  if (!confirm(T[lang].confirm_station)) return;
+  try {
+    await api(`/stations/${id}`, { method: 'DELETE', headers: SGS.H() });
+    await loadAll(); renderAll();
+    toast(T[lang].station_deleted);
+  } catch (e) { showErr(e.message); }
+}
+
+/* ═══════════ مشترك ═══════════ */
+function renderAll() { renderTable(); renderRoles(); renderStations(); }
+
+function showErr(m) { document.getElementById('err-txt').textContent = m; document.getElementById('err-alert').classList.add('show'); }
+let toastTimer;
+function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2600); }
+
+function setLang(l) {
+  lang = l; const t = T[l];
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  set('t-title', t.title); set('t-sub', t.sub);
+  set('tab-users', t.tab_users); set('tab-roles', t.tab_roles); set('tab-stations', t.tab_stations);
+  set('c-name', t.c_name); set('c-email', t.c_email); set('c-role', t.c_role);
+  set('c-station', t.c_station); set('c-status', t.c_status); set('c-actions', t.c_actions);
+  set('empty-txt', t.empty); set('cancel-l', t.cancel); set('save-l', t.save);
+  set('rc-name', t.rc_name); set('rc-key', t.rc_key); set('rc-perms', t.rc_perms);
+  set('rc-users', t.rc_users); set('rc-status', t.rc_status); set('rc-actions', t.rc_actions);
+  set('role-empty-txt', t.role_empty); set('r-cancel-l', t.cancel); set('r-save-l', t.save);
+  set('rm-key-hint', t.rm_key_hint); set('rm-lock', t.rm_lock);
+  set('sc-code', t.sc_code); set('sc-ar', t.sc_ar); set('sc-en', t.sc_en);
+  set('sc-status', t.sc_status); set('sc-actions', t.sc_actions);
+  set('station-empty-txt', t.station_empty); set('s-cancel-l', t.cancel); set('s-save-l', t.save);
+  set('sm-code-hint', t.sm_code_hint);
+  const req = (id, label) => { const e = document.getElementById(id); if (e) e.innerHTML = label + ' <span>*</span>'; };
+  req('l-name', t.l_name); req('l-email', t.l_email); req('l-pass', t.l_pass);
+  req('l-frole', t.l_role); req('l-fstation', t.l_station);
+  req('rl-key', t.rl_key); req('rl-ar', t.rl_ar); req('rl-en', t.rl_en);
+  req('sl-code', t.sl_code); req('sl-ar', t.sl_ar); req('sl-en', t.sl_en);
+  set('rl-color', t.rl_color); set('rl-active', t.rl_active); set('rl-perms', t.rl_perms);
+  set('sl-active', t.sl_active);
+  set('l-active', t.l_active); set('pass-hint', t.pass_hint);
+  const yn = `<option value="true">${t.active}</option><option value="false">${t.inactive}</option>`;
+  document.getElementById('f-active').innerHTML = yn;
+  document.getElementById('rf-active').innerHTML = yn;
+  document.getElementById('sf-active').innerHTML = yn;
+  fillRoleOptions();
+  renderAll();
+  showTab(curTab);
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // كل تبويب يظهر بصلاحيته — ويبدأ المستخدم عند أول تبويب يملكه
+  const vis = { users: can('admin.users'), roles: can('admin.roles'), stations: can('admin.stations') };
+  ['users','roles','stations'].forEach(n => {
+    const tb = document.getElementById('tab-' + n);
+    if (tb && !vis[n]) tb.style.display = 'none';
+  });
+  curTab = vis.users ? 'users' : vis.roles ? 'roles' : vis.stations ? 'stations' : 'users';
+  try { await loadAll(); } catch (e) { showErr(e.message); }
+  setLang(lang);
+});
+</script>
+</body>
+</html>

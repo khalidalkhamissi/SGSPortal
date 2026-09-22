@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGS Forms — التقارير المعتمدة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="Themes.css?v=9">
+<style>
+.act-link{ display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:8px; border:1.5px solid var(--bd); background:var(--w); color:var(--mu); cursor:pointer; text-decoration:none; font-family:'Tajawal',sans-serif; font-size:11px; font-weight:700; transition:all .15s; }
+.act-link:hover{ background:var(--gl); color:var(--g); border-color:var(--g); }
+.flt-no{ font-family:'DM Mono',monospace; font-weight:700; color:var(--tx2); }
+.filter-bar{ display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; background:var(--w); border:1px solid var(--bd); border-radius:var(--r); padding:14px 16px; margin-bottom:14px; box-shadow:var(--sh); }
+.fb-field{ display:flex; flex-direction:column; gap:5px; }
+.fb-field label{ font-size:11px; font-weight:700; color:var(--mu); }
+.fb-field input, .fb-field select{ padding:8px 12px; border:1.5px solid var(--bd); border-radius:9px; font-size:13px; font-family:'Tajawal',sans-serif; color:var(--tx); background:var(--w); outline:none; }
+.fb-field input:focus, .fb-field select:focus{ border-color:var(--g); }
+.fb-count{ margin-inline-start:auto; font-size:12px; color:var(--mu); align-self:center; }
+</style>
+</head>
+<body>
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-l">
+      <div class="pg-title" id="t-title">التقارير المعتمدة</div>
+      <div class="pg-sub"><span class="dot"></span><span id="t-sub">التقارير الموقّعة والمعتمدة من شركة الطيران</span></div>
+    </div>
+  </div>
+
+  <!-- شريط الفلترة -->
+  <div class="filter-bar">
+    <div class="fb-field"><label id="fl-q">بحث</label><input type="search" class="sgs-q" id="flt-q" maxlength="50" oninput="onSearch()"></div>
+    <div class="fb-field"><label id="fl-from">من</label><input type="date" id="flt-from" onchange="applyFilters()"></div>
+    <div class="fb-field"><label id="fl-to">إلى</label><input type="date" id="flt-to" onchange="applyFilters()"></div>
+    <div class="fb-field"><label id="fl-station">المطار</label><select id="flt-station" onchange="applyFilters()"></select></div>
+    <div class="fb-field"><label id="fl-airline">شركة الطيران</label><select id="flt-airline" onchange="applyFilters()"></select></div>
+    <button class="btn-icon" onclick="clearFilters()" id="fl-clear">مسح الفلتر</button>
+    <button class="btn-icon" onclick="exportExcel()" id="fl-xlsx">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/><path d="M9 13l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="xlsx-l">تصدير Excel</span>
+    </button>
+    <span class="fb-count" id="fl-count"></span>
+  </div>
+  <div id="toast" style="position:fixed;inset-inline-end:20px;bottom:20px;z-index:1100;background:var(--tx);color:#fff;padding:13px 18px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translateY(160%);opacity:0;transition:all .3s;"></div>
+
+  <div class="card">
+    <div class="card-body-np">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th id="c-flight">رقم الرحلة</th><th id="c-date">التاريخ</th><th id="c-station">المطار</th><th id="c-airline">شركة الطيران</th>
+            <th id="c-type">النوع</th><th id="c-status">الحالة</th><th id="c-actions" style="text-align:center;">إجراءات</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="empty" style="display:none;"><div class="empty-icon">✅</div><span id="empty-txt">لا توجد تقارير معتمدة بعد</span></div>
+    </div>
+  </div>
+
+  <div class="pager" id="pager" style="display:none;"></div>
+</main>
+
+<script src="nav.js?v=15"></script>
+<script>
+let lang = localStorage.getItem('lang') || 'en';
+const STATUS = 'approved';
+let ROWS = [], STATIONS = [], AIRLINES_LIST = [];
+let page = 1, pageSize = SGS.pageSize, total = 0;
+const T = {
+  ar:{ title:'التقارير المعتمدة', sub:'التقارير الموقّعة والمعتمدة من شركة الطيران',
+       c_flight:'رقم الرحلة', c_date:'التاريخ', c_station:'المطار', c_airline:'شركة الطيران', c_type:'النوع', c_status:'الحالة', c_actions:'إجراءات',
+       arrival:'وصول', departure:'مغادرة', approved:'معتمد', view:'عرض التوقيع', empty:'لا توجد تقارير معتمدة مطابقة',
+       fl_from:'من', fl_to:'إلى', fl_station:'المطار', fl_airline:'شركة الطيران', fl_clear:'مسح الفلتر', all:'كل المطارات', all_air:'كل الشركات', count:'النتائج' },
+  en:{ title:'Approved Reports', sub:'Reports signed and approved by the airline',
+       c_flight:'Flight No', c_date:'Date', c_station:'Airport', c_airline:'Airline', c_type:'Type', c_status:'Status', c_actions:'Actions',
+       arrival:'Arrival', departure:'Departure', approved:'Approved', view:'View Signature', empty:'No matching approved reports',
+       fl_from:'From', fl_to:'To', fl_station:'Airport', fl_airline:'Airline', fl_clear:'Clear', all:'All airports', all_air:'All airlines', count:'Results' },
+};
+const AIRLINES = { SV:'السعودية (SV)', XY:'طيران ناس (XY)', F3:'flyadeal (F3)' };
+function airlineFromFlight(flt){ const c = SGS.airlineCode(flt); return c ? (AIRLINES[c] || c) : '—'; }
+
+async function apiGet(path){
+  const res = await fetch(`${SGS.API}${path}`, { headers: SGS.H() });
+  if (res.status === 401) { localStorage.clear(); location.href='index.html'; return null; }
+  return res.ok ? res.json() : [];
+}
+function buildQuery(extra){
+  const from = document.getElementById('flt-from').value;
+  const to = document.getElementById('flt-to').value;
+  const code = document.getElementById('flt-station').value;
+  const air = document.getElementById('flt-airline').value;
+  const st = STATIONS.find(s => s.code === code);
+  const qs = new URLSearchParams({ status: STATUS });
+  if (from) qs.set('from', from);
+  if (to) qs.set('to', to);
+  if (st) qs.set('stationId', st.id);
+  if (air) qs.set('airline', air);
+  const q = document.getElementById('flt-q').value.trim();
+  if (q) qs.set('q', q);
+  if (extra) for (const k in extra) qs.set(k, extra[k]);
+  return qs;
+}
+async function load(){
+  const data = await apiGet('/reports?' + buildQuery({ page, pageSize }).toString()) || {};
+  ROWS = data.items || [];
+  total = data.total || 0;
+  AIRLINES_LIST = data.airlines || [];
+  fillAirlines();
+  render();
+}
+const onSearch = SGS.debounce(() => applyFilters());
+function applyFilters(){ page = 1; load(); }
+function fillStations(){
+  const t = T[lang];
+  document.getElementById('flt-station').innerHTML =
+    `<option value="">${t.all}</option>` + STATIONS.map(s => `<option value="${esc(s.code)}">${esc(s.code)} — ${esc(lang==='ar'?s.nameAr:s.nameEn)}</option>`).join('');
+}
+function fillAirlines(){
+  const t = T[lang], cur = document.getElementById('flt-airline').value;
+  document.getElementById('flt-airline').innerHTML = `<option value="">${t.all_air}</option>` + AIRLINES_LIST.map(c => `<option value="${esc(c)}">${esc(AIRLINES[c] || c)}</option>`).join('');
+  document.getElementById('flt-airline').value = cur;
+}
+function clearFilters(){ ['flt-from','flt-to','flt-station','flt-airline','flt-q'].forEach(id => document.getElementById(id).value=''); page = 1; load(); }
+
+let toastTimer;
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.style.transform='translateY(0)'; el.style.opacity='1'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{el.style.transform='translateY(160%)';el.style.opacity='0';},2600); }
+async function downloadAuthed(path, fallbackName){
+  toast(lang==='ar'?'جارٍ التصدير…':'Exporting…');
+  const res = await fetch(`${SGS.API}${path}`, { headers: SGS.H() });
+  if (res.status === 401) { localStorage.clear(); location.href='index.html'; return; }
+  if (!res.ok) { toast(lang==='ar'?'تعذّر التصدير':'Export failed'); return; }
+  const cd = res.headers.get('Content-Disposition') || '';
+  const m = cd.match(/filename="?([^"]+)"?/); const name = m ? m[1] : fallbackName;
+  const blob = await res.blob(); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+function exportPdf(kind, id){ downloadAuthed(`/export/report/${kind}/${id}/pdf`, `Report_${id}.pdf`); }
+function exportExcel(){
+  // يفتح نافذة الاختيار بقيم الفلتر الحالية؛ التنزيل يتم من داخلها
+  SGS.exportExcel({
+    status: STATUS, stations: STATIONS, airlines: AIRLINES_LIST, airlineNames: AIRLINES,
+    from: document.getElementById('flt-from').value, to: document.getElementById('flt-to').value,
+    stationCode: document.getElementById('flt-station').value, airline: document.getElementById('flt-airline').value,
+    q: document.getElementById('flt-q').value.trim(),
+  });
+}
+function render(){
+  const t = T[lang];
+  const rows = ROWS;
+  document.getElementById('fl-count').textContent = `${t.count}: ${total}`;
+  SGS.pager('pager', page, total, pageSize, p => { page = p; load(); });
+  const tbody = document.getElementById('rows');
+  if (!rows.length) { tbody.innerHTML=''; document.getElementById('empty').style.display='block'; return; }
+  document.getElementById('empty').style.display='none';
+  tbody.innerHTML = rows.map(r => {
+    const kind = r.kind === 'departure' ? 'departure' : 'arrival', id = Number(r.id);
+    const typeCls = kind==='arrival' ? 'cat-dom' : 'cat-intl';
+    const typeLbl = kind==='arrival' ? t.arrival : t.departure;
+    return `<tr>
+      <td class="flt-no">${esc(r.flightNo)}</td>
+      <td>${esc(r.flightDate)}</td>
+      <td>${esc(r.stationCode)}</td>
+      <td>${esc(airlineFromFlight(r.flightNo))}</td>
+      <td><span class="cat ${typeCls}">${typeLbl}</span></td>
+      <td><span class="bdg s-yes">${t.approved}</span></td>
+      <td style="text-align:center;white-space:nowrap;">
+        <a class="act-link" href="airline_approval.html?id=${id}&kind=${kind}&mode=view">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>
+          ${t.view}</a>
+        ${SGS.can('export.pdf') ? `<a class="act-link" href="javascript:void(0)" onclick="exportPdf('${kind}',${id})">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"/></svg>
+          PDF</a>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+function setLang(l){
+  lang=l; const t=T[l];
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('t-title',t.title); set('t-sub',t.sub);
+  set('c-flight',t.c_flight); set('c-date',t.c_date); set('c-station',t.c_station); set('c-airline',t.c_airline);
+  set('c-type',t.c_type); set('c-status',t.c_status); set('c-actions',t.c_actions);
+  set('empty-txt',t.empty); set('fl-from',t.fl_from); set('fl-to',t.fl_to); set('fl-station',t.fl_station); set('fl-airline',t.fl_airline); set('fl-clear',t.fl_clear);
+  set('fl-q', lang==='ar' ? 'بحث' : 'Search'); document.getElementById('flt-q').placeholder = lang==='ar' ? 'رقم الرحلة، الوجهة، المطار…' : 'Flight, route, airport…';
+  set('xlsx-l', lang==='ar'?'تصدير Excel':'Export Excel');
+  fillStations(); fillAirlines();
+  render();
+}
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!SGS.can('export.excel')) document.getElementById('fl-xlsx').style.display = 'none';
+  try { STATIONS = (await apiGet('/stations')) || []; await load(); } catch(e) { ROWS = []; }
+  setLang(lang);
+});
+</script>
+</body>
+</html>

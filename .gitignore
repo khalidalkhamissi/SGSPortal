@@ -1,0 +1,18 @@
+# Build output
+bin/
+obj/
+publish/
+*.user
+.vs/
+.vscode/
+
+# Secrets — each environment keeps its own copy (see appsettings.Production.example.json)
+appsettings.Production.json
+appsettings.*.local.json
+*.pfx
+*.key
+
+# Local data / logs
+logs/
+*.log
+*.bak

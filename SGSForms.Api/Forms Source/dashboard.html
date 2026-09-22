@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGS Forms — لوحة التحكم</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="Themes.css?v=9">
+<script src="chart.umd.min.js"></script>
+<style>
+.filters{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+.f-station{ font-family:'Tajawal',sans-serif; font-size:12.5px; font-weight:700; color:var(--tx); background:var(--w);
+  border:1.5px solid var(--bd); border-radius:9px; padding:7px 11px; cursor:pointer; min-width:140px; }
+.f-airline{ font-family:'Tajawal',sans-serif; font-size:12.5px; font-weight:700; color:var(--tx); background:var(--w);
+  border:1.5px solid var(--bd); border-radius:9px; padding:7px 11px; width:150px; outline:none; }
+.f-airline:focus{ border-color:var(--g); }
+.custom-range{ display:flex; align-items:center; gap:6px; }
+.custom-range input{ font-family:'DM Mono',monospace; font-size:12px; border:1.5px solid var(--bd); border-radius:8px; padding:6px 8px; color:var(--tx); background:var(--w); }
+.custom-range .apply{ background:var(--g); color:#fff; border:none; border-radius:8px; padding:7px 13px; font-weight:700; cursor:pointer; font-family:'Tajawal',sans-serif; font-size:12px; }
+
+.charts-row{ display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:16px; }
+.charts-row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:16px; }
+@media(max-width:1000px){ .charts-row, .charts-row3{ grid-template-columns:1fr; } }
+.chart-box{ position:relative; height:280px; }
+.chart-box.sm{ height:240px; }
+
+.act-link{ display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:8px; border:1.5px solid var(--bd); background:var(--w); color:var(--mu); cursor:pointer; text-decoration:none; font-family:'Tajawal',sans-serif; font-size:11px; font-weight:700; transition:all .15s; }
+.act-link:hover{ background:var(--gl); color:var(--g); border-color:var(--g); }
+.flt-no{ font-family:'DM Mono',monospace; font-weight:700; color:var(--tx2); }
+
+.drill-chip{ display:none; align-items:center; gap:8px; margin-bottom:12px; }
+.drill-chip.on{ display:flex; }
+.drill-chip .lbl{ background:var(--gl); color:var(--g); border-radius:20px; padding:5px 13px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:8px; }
+.drill-chip .x{ cursor:pointer; font-weight:800; }
+.hint-click{ font-size:10.5px; color:var(--mu2); font-weight:600; }
+body.loading .kpi-grid, body.loading .charts-row, body.loading .charts-row3, body.loading .tbl-wrap{ opacity:.45; transition:opacity .15s; pointer-events:none; }
+</style>
+</head>
+<body>
+<main class="main">
+
+  <div class="topbar">
+    <div class="topbar-l">
+      <div class="pg-title" id="t-title">لوحة التحكم</div>
+      <div class="pg-sub"><span class="dot"></span><span id="t-sub">نظرة عامة على تقارير المناولة</span></div>
+    </div>
+    <div class="topbar-r filters">
+      <input id="f-airline" class="f-airline" list="airlines-dl" placeholder="شركة الطيران" onchange="onAirline()" autocomplete="off">
+      <datalist id="airlines-dl">
+        <option value="SV">Saudia — السعودية</option>
+        <option value="XY">flynas — طيران ناس</option>
+        <option value="F3">flyadeal — طيران أديل</option>
+      </datalist>
+      <select id="f-station" class="f-station" style="display:none;" onchange="onStation()"></select>
+      <div class="date-wrap">
+        <button class="date-btn" onclick="setPreset(this,'today')" id="r-today">اليوم</button>
+        <button class="date-btn" onclick="setPreset(this,'7')" id="r7">٧ أيام</button>
+        <button class="date-btn act" onclick="setPreset(this,'30')" id="r30">٣٠ يوم</button>
+        <button class="date-btn" onclick="setPreset(this,'90')" id="r90">٩٠ يوم</button>
+        <button class="date-btn" onclick="setPreset(this,'year')" id="ryear">السنة</button>
+        <button class="date-btn" onclick="setPreset(this,'custom')" id="rcustom">مخصّص</button>
+      </div>
+      <div class="custom-range" id="custom-range" style="display:none;">
+        <input type="date" id="f-from"><span>→</span><input type="date" id="f-to">
+        <button class="apply" onclick="applyCustom()" id="apply-btn">تطبيق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid" id="kpis"></div>
+
+  <!-- active drill filter -->
+  <div class="drill-chip" id="drill-chip">
+    <span class="lbl"><span id="drill-text"></span><span class="x" onclick="clearDrill()">✕</span></span>
+  </div>
+
+  <!-- Charts row 1 -->
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-head"><div class="card-title" id="c1-title">التقارير عبر الزمن</div><span class="hint-click" id="h1">انقر عموداً للتصفية</span></div>
+      <div class="card-body"><div class="chart-box"><canvas id="chart-trend"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title" id="c2-title">الوصول مقابل المغادرة</div></div>
+      <div class="card-body"><div class="chart-box sm"><canvas id="chart-type"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- Charts row 2 -->
+  <div class="charts-row3">
+    <div class="card">
+      <div class="card-head"><div class="card-title" id="c3-title">حسب المحطة</div></div>
+      <div class="card-body"><div class="chart-box sm"><canvas id="chart-station"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title" id="c4-title">حسب شركة الطيران</div></div>
+      <div class="card-body"><div class="chart-box sm"><canvas id="chart-airline"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title" id="c5-title">توزيع الرضا</div></div>
+      <div class="card-body"><div class="chart-box sm"><canvas id="chart-sat"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- Latest approved -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title" id="tbl-title">أحدث التقارير المعتمدة</div>
+    </div>
+    <div class="card-body-np">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th id="c-flight">رقم الرحلة</th><th id="c-date">التاريخ</th><th id="c-type">النوع</th>
+            <th id="c-station">المحطة</th><th id="c-airline">شركة الطيران</th><th id="c-sat">الرضا</th><th id="c-status">الحالة</th>
+            <th id="c-actions" style="text-align:center;">إجراءات</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="nav.js?v=15"></script>
+<script>
+let lang = localStorage.getItem('lang') || 'en';
+let chTrend, chType, chStation, chAirline, chSat;
+
+const T = {
+  ar: {
+    title:'لوحة التحكم', sub:'نظرة عامة على تقارير المناولة',
+    r_today:'اليوم', r7:'٧ أيام', r30:'٣٠ يوم', r90:'٩٠ يوم', ryear:'السنة', rcustom:'مخصّص', apply:'تطبيق', allst:'كل المحطات', airline_ph:'شركة الطيران',
+    c1:'التقارير عبر الزمن', c2:'الوصول مقابل المغادرة', c3:'حسب المحطة', c4:'حسب شركة الطيران', c5:'توزيع الرضا',
+    hclick:'انقر عموداً للتصفية',
+    tbl:'أحدث التقارير المعتمدة',
+    c_flight:'رقم الرحلة', c_date:'التاريخ', c_type:'النوع', c_station:'المحطة', c_airline:'شركة الطيران',
+    c_sat:'الرضا', c_status:'الحالة', c_actions:'إجراءات',
+    k_total:'إجمالي التقارير', k_approved:'معتمدة', k_pending:'بانتظار الاعتماد', k_drafts:'مسودات', k_sat:'متوسط الرضا',
+    arrival:'وصول', departure:'مغادرة', approved:'معتمد', view:'عرض', arr:'وصول', dep:'مغادرة',
+    filtered:'مُصفّى:', none:'لا توجد بيانات في هذا النطاق',
+  },
+  en: {
+    title:'Dashboard', sub:'Flight handling reports overview',
+    r_today:'Today', r7:'7 days', r30:'30 days', r90:'90 days', ryear:'Year', rcustom:'Custom', apply:'Apply', allst:'All Stations', airline_ph:'Airline',
+    c1:'Reports over Time', c2:'Arrival vs Departure', c3:'By Station', c4:'By Airline', c5:'Satisfaction Distribution',
+    hclick:'click a bar to filter',
+    tbl:'Latest Approved Reports',
+    c_flight:'Flight No', c_date:'Date', c_type:'Type', c_station:'Station', c_airline:'Airline',
+    c_sat:'Satisfaction', c_status:'Status', c_actions:'Actions',
+    k_total:'Total Reports', k_approved:'Approved', k_pending:'Pending Approval', k_drafts:'Drafts', k_sat:'Avg Satisfaction',
+    arrival:'Arrival', departure:'Departure', approved:'Approved', view:'View', arr:'Arrival', dep:'Departure',
+    filtered:'Filtered:', none:'No data in this range',
+  },
+};
+
+const AIRLINES = { SV:'السعودية (SV)', XY:'طيران ناس (XY)', F3:'flyadeal (F3)', Other:'أخرى' };
+const AIRLINES_EN = { SV:'Saudia (SV)', XY:'flynas (XY)', F3:'flyadeal (F3)', Other:'Other' };
+function airlineFromFlight(flt){ return SGS.airlineCode(flt) || '—'; }
+function airlineLabel(code){ const map = lang==='ar'?AIRLINES:AIRLINES_EN; return map[code] || code; }
+
+let FILTER = { preset:'30', from:null, to:null, stationId:null, airline:null };
+const AIRLINE_CODES = { 'sv':'SV','saudia':'SV','السعودية':'SV','xy':'XY','flynas':'XY','ناس':'XY','طيران ناس':'XY','f3':'F3','flyadeal':'F3','أديل':'F3','طيران أديل':'F3' };
+let DRILL = null;              // {type:'kind'|'bucket'|'airline'|'rating', val, label}
+let STATIONS = [];
+
+let DATA = { kpis:{ total:0, approved:0, pending:0, drafts:0, sat:0 }, arrDep:[0,0], trend:[], byStation:[], byAirline:[], satDist:[0,0,0,0,0], latest:[] };
+
+/* ── نطاق التاريخ ── */
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+function rangeFor(preset){
+  const to = new Date(); let from = new Date();
+  if (preset==='today') {}
+  else if (preset==='7')  from.setDate(to.getDate()-6);
+  else if (preset==='30') from.setDate(to.getDate()-29);
+  else if (preset==='90') from.setDate(to.getDate()-89);
+  else if (preset==='year') from = new Date(to.getFullYear(),0,1);
+  return { from:ymd(from), to:ymd(to) };
+}
+
+async function loadStations(){
+  if (!SGS.can('stations.viewAll')) return;
+  try {
+    const res = await fetch(`${SGS.API}/stations`, { headers: SGS.H() });
+    if (!res.ok) return;
+    STATIONS = await res.json();
+    const sel = document.getElementById('f-station');
+    sel.style.display = '';
+    renderStationOptions();
+  } catch(e) {}
+}
+function renderStationOptions(){
+  const t = T[lang], sel = document.getElementById('f-station');
+  sel.innerHTML = `<option value="">${t.allst}</option>` +
+    STATIONS.map(s => `<option value="${Number(s.id)}">${esc(s.code)} — ${esc(lang==='ar'?s.nameAr:s.nameEn)}</option>`).join('');
+  sel.value = FILTER.stationId || '';
+}
+
+async function loadSummary(){
+  const q = FILTER.preset==='custom' ? { from:FILTER.from, to:FILTER.to } : rangeFor(FILTER.preset);
+  const p = new URLSearchParams();
+  if (q.from) p.set('from', q.from);
+  if (q.to)   p.set('to', q.to);
+  if (FILTER.stationId) p.set('stationId', FILTER.stationId);
+  if (FILTER.airline) p.set('airline', FILTER.airline);
+  const res = await fetch(`${SGS.API}/dashboard/summary?${p.toString()}`, { headers: SGS.H() });
+  if (res.status === 401) { localStorage.clear(); location.href='index.html'; return; }
+  if (!res.ok) return;
+  const s = await res.json();
+  DATA = {
+    kpis: { total:s.total, approved:s.approved, pending:s.pending, drafts:s.drafts, sat:s.avgSatisfaction },
+    arrDep: s.arrDep || [0,0],
+    trend: s.trend || [],
+    byStation: s.byStation || [],
+    byAirline: s.byAirline || [],
+    satDist: s.satDist || [0,0,0,0,0],
+    latest: (s.latest||[]).map(x => ({ id:x.id, kind:x.kind, flight:x.flightNo, date:x.flightDate, station:x.stationCode, airline:airlineFromFlight(x.flightNo), sat:x.satisfaction })),
+  };
+}
+
+const KPI_DEFS = [
+  { key:'total',    color:'var(--g)',     bg:'var(--gl)',     icon:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"/>' },
+  { key:'approved', color:'#16A34A',      bg:'#DCFCE7',       icon:'<path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' },
+  { key:'pending',  color:'var(--orange)',bg:'var(--orangel)',icon:'<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' },
+  { key:'drafts',   color:'var(--gold)',  bg:'var(--goldl)',  icon:'<path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>' },
+  { key:'sat',      color:'var(--blue)',  bg:'var(--bluel)',  icon:'<path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.8 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" fill="currentColor"/>' },
+];
+
+function renderKpis() {
+  const t = T[lang], k = DATA.kpis;
+  const labelMap = { total:t.k_total, approved:t.k_approved, pending:t.k_pending, drafts:t.k_drafts, sat:t.k_sat };
+  document.getElementById('kpis').innerHTML = KPI_DEFS.map(d => {
+    const v = d.key==='sat' ? Number(k.sat||0).toFixed(1) : SGS.fmt(k[d.key]);
+    const extra = d.key==='sat' ? ' <span style="font-size:14px;">/ 5</span>' : '';
+    return `
+    <div class="kpi" style="--kpi-color:${d.color};--kpi-bg:${d.bg};">
+      <div class="kpi-header">
+        <div class="kpi-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" style="color:${d.color}">${d.icon}</svg></div>
+      </div>
+      <div class="kpi-num">${v}${extra}</div>
+      <div class="kpi-label">${labelMap[d.key]}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── جدول + تصفية الـ drill ── */
+function drillRows(){
+  let rows = DATA.latest;
+  if (DRILL){
+    if (DRILL.type==='kind')    rows = rows.filter(r => r.kind===DRILL.val);
+    else if (DRILL.type==='airline') rows = rows.filter(r => r.airline===DRILL.val);
+    else if (DRILL.type==='rating')  rows = rows.filter(r => (r.sat|0)===DRILL.val);
+    else if (DRILL.type==='bucket')  rows = rows.filter(r => matchBucket(r.date, DRILL.val));
+  }
+  return rows;
+}
+function matchBucket(rowDate, label){
+  if (!rowDate) return false;
+  if (label.length===7) return rowDate.slice(0,7)===label;   // yyyy-MM (monthly)
+  return rowDate.slice(5)===label;                            // MM-dd (daily/weekly start)
+}
+function renderDrillChip(){
+  const chip = document.getElementById('drill-chip'), txt = document.getElementById('drill-text'), t = T[lang];
+  if (!DRILL){ chip.classList.remove('on'); return; }
+  chip.classList.add('on'); txt.textContent = `${t.filtered} ${DRILL.label}`;
+}
+function clearDrill(){ DRILL = null; renderDrillChip(); renderTable(); }
+
+function renderTable() {
+  const t = T[lang];
+  const rows = drillRows();
+  const body = document.getElementById('rows');
+  if (!rows.length){ body.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--mu);padding:22px;">${t.none}</td></tr>`; return; }
+  body.innerHTML = rows.map(r => {
+    const typeCls = r.kind==='arrival' ? 'cat-dom' : 'cat-intl';
+    const typeLbl = r.kind==='arrival' ? t.arrival : t.departure;
+    const sat = Math.max(0, Math.min(5, r.sat|0));
+    const stars = '★'.repeat(sat) + '<span style="color:var(--bd)">'+'★'.repeat(5-sat)+'</span>';
+    return `<tr>
+      <td class="flt-no">${esc(r.flight)}</td>
+      <td>${esc(r.date)}</td>
+      <td><span class="cat ${typeCls}">${typeLbl}</span></td>
+      <td>${esc(r.station||'—')}</td>
+      <td>${esc(airlineLabel(r.airline))}</td>
+      <td style="color:var(--gold);font-size:13px;letter-spacing:1px;">${stars}</td>
+      <td><span class="bdg s-yes">${t.approved}</span></td>
+      <td style="text-align:center;"><a class="act-link" href="airline_approval.html?id=${Number(r.id)}&kind=${r.kind==='departure'?'departure':'arrival'}&mode=view">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>
+        ${t.view}</a></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── الرسوم ── */
+function clickIndex(chart, evt){
+  const native = evt.native || evt;
+  const el = chart.getElementsAtEventForMode(native, 'nearest', { intersect:true }, true);
+  return el.length ? el[0].index : -1;
+}
+function setDrill(type, val, label){ DRILL = { type, val, label }; renderDrillChip(); renderTable(); }
+
+function renderCharts() {
+  const t = T[lang];
+  const grid = { color:'#EEF2F6' }, font = { family:'Tajawal' };
+  [chTrend,chType,chStation,chAirline,chSat].forEach(c => c && c.destroy());
+
+  // Trend — stacked bar (Arr/Dep) over time
+  chTrend = new Chart(document.getElementById('chart-trend'), {
+    type:'bar',
+    data:{ labels:DATA.trend.map(p=>p.label), datasets:[
+      { label:t.arr, data:DATA.trend.map(p=>p.arr), backgroundColor:'#006C4E', borderRadius:5, maxBarThickness:30, stack:'s' },
+      { label:t.dep, data:DATA.trend.map(p=>p.dep), backgroundColor:'#2563EB', borderRadius:5, maxBarThickness:30, stack:'s' },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{font,usePointStyle:true,padding:12} } },
+      scales:{ y:{ beginAtZero:true, stacked:true, grid, ticks:{font,precision:0} }, x:{ stacked:true, grid:{display:false}, ticks:{font,maxRotation:0,autoSkip:true} } },
+      onClick:(e)=>{ const i=clickIndex(chTrend,e); if(i>=0){ const p=DATA.trend[i]; setDrill('bucket', p.label, p.label); } } },
+  });
+
+  // Arrival vs Departure doughnut
+  chType = new Chart(document.getElementById('chart-type'), {
+    type:'doughnut',
+    data:{ labels:[t.arrival, t.departure], datasets:[{ data:DATA.arrDep, backgroundColor:['#006C4E','#2563EB'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{ position:'bottom', labels:{ font, padding:14, usePointStyle:true } } },
+      onClick:(e)=>{ const i=clickIndex(chType,e); if(i>=0){ setDrill('kind', i===0?'arrival':'departure', i===0?t.arrival:t.departure); } } },
+  });
+
+  // By Station — horizontal bar; click sets the station filter (refetch)
+  chStation = new Chart(document.getElementById('chart-station'), {
+    type:'bar',
+    data:{ labels:DATA.byStation.map(x=>x.name), datasets:[{ data:DATA.byStation.map(x=>x.count), backgroundColor:'#0E9F6E', borderRadius:5, maxBarThickness:26 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} },
+      scales:{ x:{ beginAtZero:true, grid, ticks:{font,precision:0} }, y:{ grid:{display:false}, ticks:{font} } },
+      onClick:(e)=>{ const i=clickIndex(chStation,e); if(i>=0){ const code=DATA.byStation[i].name; const st=STATIONS.find(s=>s.code===code); if(st){ FILTER.stationId=String(st.id); const sel=document.getElementById('f-station'); if(sel) sel.value=st.id; applyFilter(); } } } },
+  });
+
+  // By Airline doughnut
+  chAirline = new Chart(document.getElementById('chart-airline'), {
+    type:'doughnut',
+    data:{ labels:DATA.byAirline.map(x=>airlineLabel(x.name)), datasets:[{ data:DATA.byAirline.map(x=>x.count), backgroundColor:['#006C4E','#C9A84C','#2563EB','#64748B','#0E9F6E'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
+      plugins:{ legend:{ position:'bottom', labels:{ font, padding:10, usePointStyle:true, boxWidth:8 } } },
+      onClick:(e)=>{ const i=clickIndex(chAirline,e); if(i>=0){ const code=DATA.byAirline[i].name; setDrill('airline', code, airlineLabel(code)); } } },
+  });
+
+  // Satisfaction distribution
+  chSat = new Chart(document.getElementById('chart-sat'), {
+    type:'bar',
+    data:{ labels:['1★','2★','3★','4★','5★'], datasets:[{ data:DATA.satDist, backgroundColor:['#EF4444','#F59E0B','#EAB308','#84CC16','#16A34A'], borderRadius:5, maxBarThickness:34 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} },
+      scales:{ y:{ beginAtZero:true, grid, ticks:{font,precision:0} }, x:{ grid:{display:false}, ticks:{font} } },
+      onClick:(e)=>{ const i=clickIndex(chSat,e); if(i>=0){ setDrill('rating', i+1, (i+1)+'★'); } } },
+  });
+}
+
+function renderAll(){ renderKpis(); renderDrillChip(); renderCharts(); renderTable(); }
+
+async function applyFilter(){
+  document.body.classList.add('loading');
+  try { await loadSummary(); } catch(e) {}
+  DRILL = null;
+  renderAll();
+  document.body.classList.remove('loading');
+}
+
+/* ── الفلاتر ── */
+function setPreset(btn, preset){
+  document.querySelectorAll('.date-btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  document.getElementById('custom-range').style.display = preset==='custom' ? '' : 'none';
+  FILTER.preset = preset;
+  if (preset==='custom'){
+    // تهيئة الحقول بالقيم الحالية إن كانت فارغة
+    const r = rangeFor('30');
+    if (!document.getElementById('f-from').value) document.getElementById('f-from').value = FILTER.from || r.from;
+    if (!document.getElementById('f-to').value)   document.getElementById('f-to').value   = FILTER.to   || r.to;
+    return; // ينتظر زر تطبيق
+  }
+  applyFilter();
+}
+function applyCustom(){
+  const f = document.getElementById('f-from').value, t = document.getElementById('f-to').value;
+  if (!f || !t) return;
+  FILTER.preset = 'custom'; FILTER.from = f; FILTER.to = t;
+  applyFilter();
+}
+function onStation(){
+  const v = document.getElementById('f-station').value;
+  FILTER.stationId = v || null;
+  applyFilter();
+}
+function onAirline(){
+  const raw = document.getElementById('f-airline').value.trim();
+  if (!raw){ FILTER.airline = null; applyFilter(); return; }
+  FILTER.airline = AIRLINE_CODES[raw.toLowerCase()] || raw.toUpperCase().slice(0,3);
+  applyFilter();
+}
+
+function setLang(l) {
+  lang = l;
+  const t = T[l];
+  const set = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('t-title',t.title); set('t-sub',t.sub);
+  set('r-today',t.r_today); set('r7',t.r7); set('r30',t.r30); set('r90',t.r90); set('ryear',t.ryear); set('rcustom',t.rcustom);
+  set('apply-btn',t.apply);
+  set('c1-title',t.c1); set('c2-title',t.c2); set('c3-title',t.c3); set('c4-title',t.c4); set('c5-title',t.c5);
+  set('h1',t.hclick);
+  set('tbl-title',t.tbl);
+  set('c-flight',t.c_flight); set('c-date',t.c_date); set('c-type',t.c_type); set('c-station',t.c_station);
+  set('c-airline',t.c_airline); set('c-sat',t.c_sat); set('c-status',t.c_status); set('c-actions',t.c_actions);
+  if (document.getElementById('f-station').style.display !== 'none') renderStationOptions();
+  const ap = document.getElementById('f-airline'); if (ap) ap.placeholder = t.airline_ph;
+  renderAll();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadStations();
+  try { await loadSummary(); } catch(e) {}
+  setLang(lang);
+});
+</script>
+</body>
+</html>

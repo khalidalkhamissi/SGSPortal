@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGS Forms — Coordination Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="Themes.css?v=9">
+
+<style>
+body{ overflow-x:hidden; }
+
+.view-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:14px; flex-wrap:wrap; margin-bottom:18px;
+}
+.view-head .actions{ display:flex; gap:10px; flex-wrap:wrap; }
+@media(max-width:560px){ .view-head{ flex-direction:column; align-items:flex-start; } }
+
+.bdg{ display:inline-flex; font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; white-space:nowrap; }
+.s-draft{ background:var(--goldl); color:#9a7d2e; }
+.s-done{  background:#DCFCE7;      color:#16A34A; }
+.chip{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:6px 14px; border-radius:30px; font-size:13px; font-weight:800;
+  background:var(--goldl); color:#9a7d2e;
+}
+
+/* بطاقة قسم */
+.sec{ margin-bottom:14px; }
+.sec-ico{
+  width:30px; height:30px; border-radius:9px; flex-shrink:0;
+  background:var(--gl); color:var(--g);
+  display:flex; align-items:center; justify-content:center;
+}
+.sec-htext{ display:flex; align-items:center; gap:10px; }
+.sec-num{
+  font-family:'DM Mono',monospace; font-size:11px; font-weight:700;
+  color:var(--mu); background:var(--bg); border-radius:6px; padding:1px 7px;
+}
+.sec-body{ padding:18px; }
+
+/* شبكة القيم — عرض فقط */
+.val-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px 18px; }
+.val{ min-width:0; }
+.val .k{ font-size:11px; font-weight:700; color:var(--mu); margin-bottom:3px; }
+.val .v{
+  font-size:13.5px; font-weight:600; color:var(--tx);
+  padding-bottom:5px; border-bottom:1px solid var(--bd2);
+  overflow-wrap:anywhere; min-height:22px;
+}
+.val .v.mono{ font-family:'DM Mono',monospace; }
+.val .v.empty{ color:var(--mu2); font-weight:400; }
+
+.sub-h{
+  font-size:12px; font-weight:800; color:var(--tx);
+  margin:18px 0 11px; padding-top:15px; border-top:1px solid var(--bd2);
+}
+.sub-h.first{ margin-top:0; padding-top:0; border-top:none; }
+
+/* جدول الأنشطة — نصّ لا حقول */
+.tc{ width:100%; border-collapse:collapse; font-size:11.5px; min-width:760px; }
+.tc th, .tc td{ border:1px solid var(--bd); padding:6px 8px; text-align:center; }
+.tc thead th{ background:var(--bg); color:var(--tx); font-weight:800; font-size:10.5px; white-space:nowrap; }
+.tc td.tc-act{ text-align:start; font-weight:600; white-space:nowrap; background:var(--w); }
+.tc td.mono{ font-family:'DM Mono',monospace; }
+.tc tbody tr:nth-child(even) td{ background:#FBFCFE; }
+.tc td.dim{ color:var(--mu2); }
+.tc td.tc-rem{ text-align:start; min-width:160px; }
+
+.notes{ font-size:13.5px; color:var(--tx); line-height:1.8; white-space:pre-wrap; overflow-wrap:anywhere; }
+.notes.empty{ color:var(--mu2); }
+
+#toast{
+  position:fixed; inset-inline-end:20px; bottom:20px; z-index:1100;
+  background:var(--tx); color:#fff; padding:13px 18px; border-radius:12px;
+  font-size:13px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.25);
+  display:flex; align-items:center; gap:9px; transform:translateY(140%); opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+}
+#toast.show{ transform:translateY(0); opacity:1; }
+</style>
+</head>
+
+<body>
+<main class="main">
+
+  <div class="view-head">
+    <div>
+      <div class="pg-title" id="t-title">نموذج التنسيق</div>
+      <div class="pg-sub"><span class="dot"></span><span id="t-sub">عرض فقط</span></div>
+    </div>
+    <div class="actions">
+      <span class="bdg s-draft" id="v-status">—</span>
+      <button class="btn-icon" onclick="downloadPdf()" id="b-pdf">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"/><path d="M12 12v5m0 0l-2-2m2 2l2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="b-pdf-l">تحميل PDF</span>
+      </button>
+      <a class="btn-primary" id="b-edit" href="#">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        <span id="b-edit-l">تعديل</span>
+      </a>
+      <a class="btn-icon" href="coordination.html" id="b-back">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="b-back-l">رجوع</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="alt alt-er" id="err-alert">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <span id="err-txt"></span>
+  </div>
+
+  <div id="content" style="display:none;">
+
+    <!-- ١ معلومات عامة -->
+    <div class="sec card">
+      <div class="card-head">
+        <div class="sec-htext">
+          <span class="sec-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="currentColor"/></svg></span>
+          <div class="card-title"><span class="sec-num">1</span> <span id="s1-title">معلومات عامة</span></div>
+        </div>
+        <span class="chip" id="v-handling">—</span>
+      </div>
+      <div class="sec-body"><div class="val-grid" id="g-general"></div></div>
+    </div>
+
+    <!-- ٢ بيانات الرحلة -->
+    <div class="sec card">
+      <div class="card-head">
+        <div class="sec-htext">
+          <span class="sec-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M2 12h20M6 8l-4 4 4 4M18 8l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div class="card-title"><span class="sec-num">2</span> <span id="s2-title">بيانات الرحلة</span></div>
+        </div>
+      </div>
+      <div class="sec-body">
+        <div class="sub-h first arr-only" id="sh-arr">الوصول</div>
+        <div class="val-grid arr-only" id="g-arr"></div>
+        <div class="sub-h dep-only" id="sh-dep">المغادرة</div>
+        <div class="val-grid dep-only" id="g-dep"></div>
+        <div class="sub-h dep-gain" id="sh-times">الأوقات</div>
+        <div class="val-grid dep-gain" id="g-times"></div>
+        <div class="sub-h" id="sh-delay">التأخير</div>
+        <div class="val-grid" id="g-delay"></div>
+      </div>
+    </div>
+
+    <!-- ٣ جدول الأنشطة -->
+    <div class="sec card">
+      <div class="card-head">
+        <div class="sec-htext">
+          <span class="sec-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <div class="card-title"><span class="sec-num">3</span> <span id="s3-title">جدول الأنشطة (Time Chart)</span></div>
+        </div>
+      </div>
+      <div class="sec-body">
+        <div class="tbl-wrap">
+          <table class="tc">
+            <thead>
+              <tr>
+                <th id="th-act">Activities</th>
+                <th id="th-as">Actual Start</th>
+                <th id="th-af">Actual Finish</th>
+                <th id="th-dur">Duration</th>
+                <th id="th-rem">Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="tc-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ٤ الباصات -->
+    <div class="sec card">
+      <div class="card-head">
+        <div class="sec-htext">
+          <span class="sec-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 11h18M7 21v-2m10 2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <div class="card-title"><span class="sec-num">4</span> <span id="s4-title">سجل الباصات</span></div>
+        </div>
+      </div>
+      <div class="sec-body">
+        <div class="sub-h first arr-only" id="sh-bus-arr">باصات الوصول</div>
+        <div class="val-grid arr-only" id="g-bus-arr"></div>
+        <div class="sub-h dep-only" id="sh-bus-dep">باصات المغادرة</div>
+        <div class="val-grid dep-only" id="g-bus-dep"></div>
+      </div>
+    </div>
+
+    <!-- ملاحظات -->
+    <div class="sec card">
+      <div class="card-head">
+        <div class="sec-htext">
+          <span class="sec-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M4 5h16M4 10h16M4 15h10M4 20h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <div class="card-title"><span id="s5-title">ملاحظات</span></div>
+        </div>
+      </div>
+      <div class="sec-body"><div class="notes" id="v-remarks">—</div></div>
+    </div>
+
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script src="nav.js?v=15"></script>
+<script>
+/* ════════════════════════════════════════════════
+   عرض نموذج التنسيق — قراءة فقط
+   التعديل في coordination_form.html والـ PDF من الخادم
+════════════════════════════════════════════════ */
+
+const ID = new URLSearchParams(location.search).get('id');
+let lang = localStorage.getItem('lang') || 'en';
+let DATA = null;
+
+const ACTIVITIES = [
+  { k:'blocks_in',            en:'Blocks In',            ar:'دخول الموقف' },
+  { k:'position_plb',         en:'Position PLB/Step',    ar:'تركيب الجسر/السلّم' },
+  { k:'open_door',            en:'Door Open',            ar:'فتح الباب' },
+  { k:'pax_deplane',          en:'Passenger Deplane',    ar:'نزول الركاب' },
+  { k:'customs_clearance',    en:'Customs Clearance',    ar:'التخليص الجمركي' },
+  { k:'cabin_cleaning',       en:'Cabin Cleaning',       ar:'تنظيف المقصورة' },
+  { k:'galley_services',      en:'Galley Services',      ar:'خدمات المطبخ' },
+  { k:'cabin_security_check', en:'Cabin Security Check', ar:'الفحص الأمني للمقصورة' },
+  { k:'boarding_clearance',   en:'Boarding Clearance',   ar:'إذن الصعود' },
+  { k:'pax_enplane',          en:'Passengers Enplane',   ar:'صعود الركاب' },
+  { k:'top_finalization',     en:'TOP Finalization',     ar:'إنهاء TOP' },
+  { k:'fwd_unloading',        en:'FWD Unloading',        ar:'تفريغ أمامي' },
+  { k:'fwd_loading',          en:'FWD Loading',          ar:'تحميل أمامي' },
+  { k:'aft_unloading',        en:'AFT Unloading',        ar:'تفريغ خلفي' },
+  { k:'aft_loading',          en:'AFT Loading',          ar:'تحميل خلفي' },
+  { k:'bulk_unloading',       en:'Bulk Unloading',       ar:'تفريغ السائب' },
+  { k:'bulk_loading',         en:'Bulk Loading',         ar:'تحميل السائب' },
+  { k:'gpu_support',          en:'GPU Support',          ar:'دعم GPU' },
+  { k:'acu_support',          en:'ACU Support',          ar:'دعم ACU' },
+  { k:'asu_support',          en:'ASU Support',          ar:'دعم ASU' },
+  { k:'refueling',            en:'Refueling',            ar:'التزوّد بالوقود' },
+  { k:'close_door',           en:'Door Close',           ar:'إغلاق الباب' },
+  { k:'remove_plb',           en:'Remove PLB/Step',      ar:'رفع الجسر/السلّم' },
+  { k:'pushback',             en:'Pushback/Block-out',   ar:'الدفع/الخروج من الموقف' },
+];
+
+const T = {
+  ar: {
+    title:'نموذج التنسيق', sub:'عرض فقط', pdf:'تحميل PDF', edit:'تعديل', back:'رجوع',
+    s1:'معلومات عامة', s2:'بيانات الرحلة', s3:'جدول الأنشطة (Time Chart)', s4:'سجل الباصات', s5:'ملاحظات',
+    sh_arr:'الوصول', sh_dep:'المغادرة', sh_delay:'التأخير',
+    sh_bus_arr:'باصات الوصول', sh_bus_dep:'باصات المغادرة',
+    date:'التاريخ', actype:'نوع الطائرة', acreg:'تسجيل الطائرة',
+    station:'المطار', supervisor:'المشرف', rtime:'وقت التقرير',
+    flight_no:'رقم الرحلة', from:'قادمة من', to:'متجهة إلى',
+    pax_f:'الركاب (F)', pax_j:'الركاب (J)', pax_y:'الركاب (Y)', pax_total:'إجمالي الركاب', sh_times:'الأوقات',
+    gain:'GAIN Time', dly:'مقدار التأخير', code:'كود التأخير',
+    th_act:'النشاط', th_as:'البداية الفعلية', th_af:'النهاية الفعلية', th_dur:'المدة', th_rem:'ملاحظات',
+    turnaround:'ذهاب وعودة', transit:'عبور', terminating:'منتهية', originating:'مُنشِئة', none:'غير محدد',
+    st_draft:'مسودة', st_done:'مكتمل',
+    empty:'—', no_buses:'لا توجد باصات', no_remarks:'لا توجد ملاحظات',
+    load_err:'تعذّر تحميل النموذج', pdf_err:'تعذّر توليد الملف', pdf_wait:'جارٍ التوليد…',
+  },
+  en: {
+    title:'Coordination Sheet', sub:'View only', pdf:'Download PDF', edit:'Edit', back:'Back',
+    s1:'General Information', s2:'Flight Data', s3:'Activities Time Chart', s4:'Busses Record', s5:'Remarks',
+    sh_arr:'Arrival', sh_dep:'Departure', sh_delay:'Delay',
+    sh_bus_arr:'Arrival Busses', sh_bus_dep:'Departure Busses',
+    date:'Date', actype:'AC Type', acreg:'AC Reg',
+    station:'Station', supervisor:'Supervisor', rtime:'Report Time',
+    flight_no:'Flight No.', from:'From', to:'To',
+    pax_f:'Pax Load (F)', pax_j:'Pax Load (J)', pax_y:'Pax Load (Y)', pax_total:'Total Pax', sh_times:'Times',
+    gain:'GAIN Time', dly:'DLY Amount', code:'Delay Code',
+    th_act:'Activities', th_as:'Actual Start', th_af:'Actual Finish', th_dur:'Duration', th_rem:'Remarks',
+    turnaround:'Turnaround', transit:'Transit', terminating:'Terminating', originating:'Originating', none:'Not set',
+    st_draft:'Draft', st_done:'Completed',
+    empty:'—', no_buses:'No busses', no_remarks:'No remarks',
+    load_err:'Failed to load sheet', pdf_err:'Failed to generate file', pdf_wait:'Generating…',
+  },
+};
+
+
+/* خلية قيمة — تُظهر شرطة رمادية عند الفراغ */
+function val(k, v, mono){
+  const has = v !== null && v !== undefined && String(v).trim() !== '';
+  return `<div class="val"><div class="k">${esc(k)}</div>
+    <div class="v${mono ? ' mono' : ''}${has ? '' : ' empty'}">${has ? esc(v) : '—'}</div></div>`;
+}
+
+function handlingOf(d){
+  const t = T[lang];
+  return d.turnaround ? t.turnaround : d.transit ? t.transit
+       : d.terminating ? t.terminating : d.originating ? t.originating : t.none;
+}
+
+function render(){
+  if (!DATA) return;
+  const d = DATA, t = T[lang];
+
+  document.getElementById('v-handling').textContent = handlingOf(d);
+  const done = d.status !== 'draft';
+  const st = document.getElementById('v-status');
+  st.textContent = done ? t.st_done : t.st_draft;
+  st.className = 'bdg ' + (done ? 's-done' : 's-draft');
+
+  document.getElementById('g-general').innerHTML =
+      val(t.date, d.flightDate, true) + val(t.actype, d.acType) + val(t.acreg, d.acReg)
+    + val(t.station, d.stationCode) + val(t.supervisor, d.supervisorName) + val(t.rtime, d.reportTime, true);
+
+  document.getElementById('g-arr').innerHTML =
+      val(t.flight_no, d.arrFlightNo, true) + val(t.from, d.arrFrom)
+    + val(t.pax_f, d.arrPaxF) + val(t.pax_j, d.arrPaxJ) + val(t.pax_y, d.arrPaxY)
+    + val(t.pax_total, (d.arrPaxF||0)+(d.arrPaxJ||0)+(d.arrPaxY||0), true)
+    + val('STA', d.sta, true) + val('ATA', d.ata, true);
+
+  document.getElementById('g-dep').innerHTML =
+      val(t.flight_no, d.depFlightNo, true) + val(t.to, d.depTo)
+    + val(t.pax_f, d.depPaxF) + val(t.pax_j, d.depPaxJ) + val(t.pax_y, d.depPaxY)
+    + val(t.pax_total, (d.depPaxF||0)+(d.depPaxJ||0)+(d.depPaxY||0), true)
+    + val('STD', d.std, true) + val('ATD', d.atd, true);
+
+  document.getElementById('g-times').innerHTML = val(t.gain, d.gainTime, true);
+
+  document.getElementById('g-delay').innerHTML =
+      val(t.dly, d.dlyAmount, true) + val(t.code, d.delayCode, true);
+
+  // جدول الأنشطة الـ24 — الصفوف بلا بيانات تظهر فارغة
+  const byKey = {};
+  (d.activities || []).forEach(a => { byKey[a.key] = a; });
+  document.getElementById('tc-body').innerHTML = ACTIVITIES.map(def => {
+    const a = byKey[def.k] || {};
+    const c = v => `<td class="mono${(v == null || v === '') ? ' dim' : ''}">${(v == null || v === '') ? '—' : esc(v)}</td>`;
+    return `<tr><td class="tc-act">${esc(lang === 'ar' ? def.ar : def.en)}</td>
+      ${c(a.actualStart)}${c(a.actualFinish)}${c(a.duration)}
+      <td class="tc-rem${(a.remarks == null || a.remarks === '') ? ' dim' : ''}">${(a.remarks == null || a.remarks === '') ? '—' : esc(a.remarks)}</td></tr>`;
+  }).join('');
+
+  const buses = (arr, id) => {
+    const el = document.getElementById(id);
+    el.innerHTML = (arr && arr.length)
+      ? arr.map((b, i) => val(`#${i + 1}`, `${b.busNo || '—'}  ·  ${b.time || '—'}`, true)).join('')
+      : `<div class="val"><div class="v empty">${esc(t.no_buses)}</div></div>`;
+  };
+  buses(d.busesArrival, 'g-bus-arr');
+  buses(d.busesDeparture, 'g-bus-dep');
+
+  const rem = document.getElementById('v-remarks');
+  const hasRem = d.remarks && String(d.remarks).trim() !== '';
+  rem.textContent = hasRem ? d.remarks : t.no_remarks;
+  rem.className = 'notes' + (hasRem ? '' : ' empty');
+
+  // الإظهار المشروط بنوع المناولة — نفس قاعدة النموذج
+  const showArr = !d.originating || d.turnaround || d.transit || d.terminating;
+  const showDep = !d.terminating || d.turnaround || d.transit || d.originating;
+  document.querySelectorAll('.arr-only').forEach(e => e.style.display = showArr ? '' : 'none');
+  document.querySelectorAll('.dep-only').forEach(e => e.style.display = showDep ? '' : 'none');
+  // GAIN = STD − ATD ⇒ يُعرض كلما وُجدت مغادرة
+  document.querySelectorAll('.dep-gain').forEach(e => e.style.display = showDep ? '' : 'none');
+}
+
+async function load(){
+  if (!ID) { showErr(T[lang].load_err); return; }
+  const res = await fetch(`${SGS.API}/coordination/${encodeURIComponent(ID)}`, { headers: SGS.H() });
+  if (res.status === 401) { localStorage.clear(); location.href = 'index.html'; return; }
+  if (!res.ok) { showErr(T[lang].load_err); return; }
+  DATA = await res.json();
+  document.getElementById('b-edit').href = `coordination_form.html?id=${encodeURIComponent(ID)}`;
+  document.getElementById('content').style.display = '';
+  render();
+}
+
+/* التنزيل عبر fetch لأن رابط <a> المباشر لا يحمل ترويسة المصادقة */
+async function downloadPdf(){
+  const t = T[lang];
+  toast(t.pdf_wait);
+  const res = await fetch(`${SGS.API}/export/coordination/${encodeURIComponent(ID)}/pdf`, { headers: SGS.H() });
+  if (res.status === 401) { localStorage.clear(); location.href = 'index.html'; return; }
+  if (!res.ok) { toast(t.pdf_err); return; }
+  const cd = res.headers.get('Content-Disposition') || '';
+  const m = cd.match(/filename="?([^"]+)"?/);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = m ? m[1] : `Coordination_${ID}.pdf`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function showErr(msg){
+  document.getElementById('err-txt').textContent = msg;
+  document.getElementById('err-alert').classList.add('show');
+}
+
+let toastTimer;
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2600); }
+
+function setLang(l){
+  lang = l;
+  const t = T[l];
+  const set = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('t-title',t.title); set('t-sub',t.sub);
+  set('b-pdf-l',t.pdf); set('b-edit-l',t.edit); set('b-back-l',t.back);
+  set('s1-title',t.s1); set('s2-title',t.s2); set('s3-title',t.s3); set('s4-title',t.s4); set('s5-title',t.s5);
+  set('sh-arr',t.sh_arr); set('sh-dep',t.sh_dep); set('sh-delay',t.sh_delay);
+  set('sh-bus-arr',t.sh_bus_arr); set('sh-bus-dep',t.sh_bus_dep);
+  set('th-act',t.th_act); set('th-as',t.th_as); set('th-af',t.th_af); set('th-dur',t.th_dur); set('th-rem',t.th_rem);
+  set('sh-times',t.sh_times);
+  render();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!SGS.can('export.pdf')) document.getElementById('b-pdf').style.display = 'none';
+  if (!SGS.can('coordination.create')) document.getElementById('b-edit').style.display = 'none';
+  setLang(lang);
+  try { await load(); } catch (e) { showErr(T[lang].load_err); }
+});
+</script>
+</body>
+</html>

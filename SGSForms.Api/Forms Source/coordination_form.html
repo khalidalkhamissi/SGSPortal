@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGS Forms — Coordination Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="Themes.css?v=9">
+
+<style>
+/* ── أنماط خاصة بنموذج التنسيق (تبني فوق Themes.css) ── */
+body{ overflow-x:hidden; }
+
+/* حقول الوقت 24 ساعة (HH:MM) */
+.time24{ font-variant-numeric: tabular-nums; letter-spacing:.5px; }
+
+.form-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:14px; flex-wrap:wrap; margin-bottom:18px;
+}
+.form-head .pg-title{ min-width:0; }
+@media(max-width:560px){
+  .form-head{ flex-direction:column; align-items:flex-start; }
+  .form-head .pg-title{ font-size:19px; }
+}
+.dir-chip{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:6px 14px; border-radius:30px;
+  font-size:13px; font-weight:800;
+}
+.dir-coord{ background:var(--goldl); color:#9a7d2e; }
+
+/* عنوان الطباعة فقط */
+.print-title{ display:none; }
+
+/* بطاقة قسم قابلة للطي */
+.sec{ margin-bottom:14px; }
+.sec > .card-head{ cursor:pointer; user-select:none; }
+.sec-ico{
+  width:30px; height:30px; border-radius:9px; flex-shrink:0;
+  background:var(--gl); color:var(--g);
+  display:flex; align-items:center; justify-content:center;
+}
+.sec-htext{ display:flex; align-items:center; gap:10px; }
+.sec-num{
+  font-family:'DM Mono',monospace; font-size:11px; font-weight:700;
+  color:var(--mu); background:var(--bg); border-radius:6px; padding:1px 7px;
+}
+.sec-chev{ transition:transform .25s; color:var(--mu); }
+.sec.collapsed .sec-chev{ transform:rotate(-90deg); }
+.sec-body{ padding:18px; }
+.sec.collapsed .sec-body{ display:none; }
+
+/* عنوان فرعي داخل القسم */
+.sub-h{
+  font-size:12px; font-weight:800; color:var(--tx);
+  margin:18px 0 11px; padding-top:15px; border-top:1px solid var(--bd2);
+}
+.sub-h.first{ margin-top:0; padding-top:0; border-top:none; }
+
+/* شبكة الحقول المتجاوبة */
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));
+  gap:14px 16px;
+}
+.form-grid.tight{ grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); }
+.form-grid .col-2{ grid-column:span 2; }
+.form-grid .col-all{ grid-column:1 / -1; }
+@media(max-width:520px){ .form-grid .col-2{ grid-column:1 / -1; } }
+
+/* حقل للقراءة فقط (تلقائي) */
+.field .ro{
+  background:var(--bd2) !important;
+  color:var(--tx2); font-weight:600; cursor:not-allowed;
+}
+.auto-tag{
+  font-size:9px; font-weight:700; color:var(--g);
+  background:var(--gl); border-radius:5px; padding:1px 6px; margin-inline-start:6px;
+}
+
+/* ── أزرار شريحة لاختيار واحد (نفس نمط Bus/Jetway في report_form) ── */
+.seg{ display:flex; gap:0; border:1.5px solid var(--bd); border-radius:9px; overflow:hidden; width:fit-content; max-width:100%; flex-wrap:wrap; }
+.seg button{
+  padding:10px 20px; border:none; background:var(--w); cursor:pointer;
+  font-family:'Tajawal',sans-serif; font-size:13px; font-weight:600; color:var(--mu);
+  border-inline-end:1.5px solid var(--bd); transition:all .15s;
+}
+.seg button:last-child{ border-inline-end:none; }
+.seg button.on{ background:linear-gradient(135deg,var(--g),var(--gm)); color:#fff; }
+
+/* ── خانات التأشير (غير موجودة في Themes.css) ── */
+.chk-grid{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(215px, 1fr));
+  gap:10px 14px;
+}
+.chk{
+  display:flex; align-items:center; gap:9px; cursor:pointer;
+  padding:10px 13px; border:1.5px solid var(--bd); border-radius:10px;
+  background:var(--w); transition:all .15s;
+  font-size:12.5px; font-weight:600; color:var(--tx); line-height:1.35;
+}
+.chk:hover{ border-color:var(--g); background:var(--gl); }
+.chk input{
+  width:17px; height:17px; flex-shrink:0; margin:0;
+  accent-color:var(--g); cursor:pointer;
+}
+.chk:has(input:checked){ border-color:var(--g); background:var(--gl); color:var(--g); }
+
+/* ── جدول الأنشطة (Time Chart) ── */
+.tc{ width:100%; border-collapse:collapse; font-size:11.5px; min-width:720px; }
+.tc th, .tc td{ border:1px solid var(--bd); padding:0; text-align:center; }
+.tc thead th{
+  background:var(--bg); color:var(--tx); font-weight:800;
+  font-size:10.5px; padding:8px 6px; line-height:1.35; white-space:nowrap;
+}
+.tc td.tc-act{
+  text-align:start; padding:6px 11px; font-weight:600; font-size:11.5px;
+  background:var(--w); white-space:nowrap;
+  position:sticky; inset-inline-start:0; z-index:1;
+}
+.tc thead th.tc-act{ position:sticky; inset-inline-start:0; z-index:2; text-align:start; }
+.tc-i{
+  width:100%; border:none; background:transparent; outline:none;
+  padding:8px 4px; text-align:center;
+  font-size:11.5px; font-family:'DM Mono',monospace; color:var(--tx);
+}
+.tc-i:focus{ background:var(--gl); }
+/* خانتا Elapse محسوبتان تلقائياً */
+.tc-i[readonly]{ background:var(--bd2); color:var(--tx2); font-weight:700; cursor:not-allowed; }
+/* عمود الملاحظات نصّي وأوسع */
+.tc-i.tc-rem{ font-family:'Tajawal',sans-serif; text-align:start; }
+.tc th:last-child, .tc td:last-child{ min-width:180px; }
+.tc tbody tr:nth-child(even) td{ background:#FBFCFE; }
+
+/* صف باص قابل للتكرار */
+.bus-row{
+  display:grid; grid-template-columns:1fr 130px 40px; gap:10px; align-items:end;
+  margin-bottom:10px;
+}
+@media(max-width:680px){ .bus-row{ grid-template-columns:1fr 100px 40px; } }
+
+/* مربع النص (ملاحظات) */
+.field textarea{
+  width:100%; padding:9px 12px;
+  border:1.5px solid var(--bd); border-radius:9px;
+  font-size:13px; font-family:'Tajawal',sans-serif; color:var(--tx);
+  background:var(--w); outline:none; resize:vertical; min-height:64px;
+  transition:border-color .2s;
+}
+.field textarea:focus{ border-color:var(--g); }
+
+.del-x{
+  width:38px; height:38px; border-radius:9px; flex-shrink:0;
+  border:1.5px solid var(--bd); background:var(--w); color:var(--red);
+  cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s;
+}
+.del-x:hover{ background:var(--redl); border-color:var(--red); }
+.add-row{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:8px 15px; border-radius:9px;
+  border:1.5px dashed var(--bd); background:var(--w); color:var(--g);
+  cursor:pointer; font-family:'Tajawal',sans-serif; font-size:12.5px; font-weight:700; transition:all .15s;
+}
+.add-row:hover{ border-color:var(--g); background:var(--gl); }
+
+/* شريط الإجراءات السفلي الثابت */
+.action-bar{
+  position:sticky; bottom:0; z-index:50;
+  margin:18px -28px -24px;
+  padding:14px 28px;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(8px);
+  border-top:1px solid var(--bd);
+  display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+}
+.action-bar .ab-info{ font-size:11.5px; color:var(--mu); display:flex; align-items:center; gap:7px; }
+.action-bar .ab-btns{ display:flex; gap:10px; flex-wrap:wrap; }
+@media(max-width:768px){ .action-bar{ margin:18px 0 0; padding:12px 0; } .action-bar .ab-btns{ flex:1; } .action-bar .ab-btns .btn-primary,.action-bar .ab-btns .btn-icon{ flex:1; justify-content:center; } }
+@media(max-width:560px){ .action-bar .ab-info{ display:none; } }
+
+/* Toast */
+#toast{
+  position:fixed; inset-inline-end:20px; bottom:90px; z-index:1100;
+  background:var(--tx); color:#fff; padding:13px 18px; border-radius:12px;
+  font-size:13px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.25);
+  display:flex; align-items:center; gap:9px; transform:translateY(160%); opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+}
+#toast.show{ transform:translateY(0); opacity:1; }
+
+/* ════════════════════════════════════════════════
+   نسخة الطباعة — تحاكي الورقة الأصلية (A4)
+   ملاحظة: nav.js يحقن <style> بعد هذا الملف، لذا
+   قواعد الهوامش تستخدم "html body" لرفع الأولوية.
+════════════════════════════════════════════════ */
+@media print{
+  @page{ size:A4 portrait; margin:10mm; }
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+  html, body{ background:#fff !important; }
+  body{ font-size:10pt; color:#000; }
+
+  #sgs, #sgs-ham, #sgs-bg, #sgs-nav-root, #sgs-alert,
+  .action-bar, #toast, .add-row, .del-x, .sec-chev, .sec-ico,
+  .alt, .btn-icon, .btn-primary, .dir-chip, .pg-sub{ display:none !important; }
+
+  html body .main, html body main{
+    margin-inline-start:0 !important; padding:0 !important; min-height:0 !important;
+  }
+
+  .print-title{
+    display:block !important; text-align:center;
+    font-size:14pt; font-weight:800; color:#000;
+    border:1px solid #000; padding:5px; margin-bottom:6px;
+  }
+  .form-head{ display:none !important; }
+
+  .sec{
+    margin-bottom:5px; break-inside:avoid; page-break-inside:avoid;
+    border:1px solid #000 !important; border-radius:0 !important; box-shadow:none !important;
+  }
+  .sec.collapsed .sec-body{ display:block !important; }
+  .sec > .card-head{
+    background:#D9D9D9 !important; border-bottom:1px solid #000 !important;
+    padding:3px 8px !important; cursor:default;
+  }
+  .card-title{ font-size:9.5pt !important; color:#000 !important; }
+  .sec-num{ background:none !important; color:#000 !important; padding:0 !important; }
+  .sec-body{ padding:5px 8px !important; }
+
+  .sub-h{ font-size:8.5pt !important; color:#000 !important; margin:7px 0 4px !important; padding-top:5px !important; }
+  .form-grid{ gap:3px 9px !important; }
+  .field{ margin-bottom:0 !important; }
+  .field label{ font-size:7pt !important; color:#000 !important; margin-bottom:0 !important; font-weight:700; }
+  .field label span, .auto-tag{ display:none !important; }
+  .field input, .field select{
+    border:none !important; border-bottom:1px solid #000 !important; border-radius:0 !important;
+    background:transparent !important; color:#000 !important;
+    padding:0 2px !important; font-size:8.5pt !important; height:auto !important;
+  }
+  .field textarea{
+    border:1px solid #000 !important; border-radius:0 !important;
+    background:transparent !important; color:#000 !important;
+    min-height:38px !important; font-size:8.5pt !important; padding:2px 4px !important;
+  }
+
+  .chk-grid{ gap:1px 10px !important; }
+  .chk{
+    border:none !important; background:none !important; color:#000 !important;
+    padding:1px 0 !important; font-size:7.5pt !important;
+  }
+  .chk input{ width:10px !important; height:10px !important; }
+
+  .tbl-wrap{ overflow:visible !important; }
+  .tc{ min-width:0 !important; width:100% !important; }
+  .tc th, .tc td{ border:1px solid #000 !important; }
+  .tc thead th{
+    background:#D9D9D9 !important; color:#000 !important;
+    font-size:6.5pt !important; padding:2px 1px !important;
+  }
+  .tc td.tc-act{
+    position:static !important; background:#fff !important;
+    font-size:7pt !important; padding:1px 4px !important; color:#000 !important;
+  }
+  .tc tbody tr:nth-child(even) td{ background:#fff !important; }
+  .tc-i{ font-size:7pt !important; padding:1px !important; color:#000 !important; }
+  .tc-i[readonly]{ background:transparent !important; }
+  thead{ display:table-header-group; }
+
+  .bus-row{ gap:6px !important; margin-bottom:2px !important; }
+}
+</style>
+</head>
+
+<body>
+<main class="main">
+
+  <!-- عنوان الطباعة فقط -->
+  <div class="print-title">COORDINATION SHEET / TIME CHART</div>
+
+  <!-- ── رأس النموذج ── -->
+  <div class="form-head">
+    <div>
+      <div class="pg-title" id="t-title">نموذج التنسيق</div>
+      <div class="pg-sub"><span class="dot"></span><span id="t-sub">تعبئة نموذج جديد</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span class="dir-chip dir-coord" id="dir-chip">Coordination</span>
+      <a class="btn-icon" href="coordination.html" id="t-back">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="t-back-l">رجوع</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- تنبيه التحقق -->
+  <div class="alt alt-er" id="err-alert">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <span id="err-txt"></span>
+  </div>
+
+  <form id="cform" autocomplete="off">
+
+    <!-- ════ القسم ١: معلومات عامة ════ -->
+    <div class="sec card" data-sec>
+      <div class="card-head" onclick="toggleSec(this)">
+        <div class="sec-htext">
+          <span class="sec-ico">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="currentColor"/></svg>
+          </span>
+          <div class="card-title"><span class="sec-num">1</span> <span id="s1-title">معلومات عامة</span></div>
+        </div>
+        <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="sec-body">
+        <div class="form-grid">
+          <div class="field"><label id="l-date">التاريخ <span class="auto-tag">تلقائي</span></label><input type="date" id="f-date"></div>
+          <div class="field"><label id="l-actype">AC Type</label><input type="text" id="f-actype" placeholder="B777"></div>
+          <div class="field"><label id="l-acreg">AC Reg</label><input type="text" id="f-acreg" placeholder="HZ-AK11"></div>
+          <div class="field"><label id="l-sup">اسم المشرف <span class="auto-tag">تلقائي</span></label><input type="text" id="f-sup" class="ro" readonly></div>
+          <div class="field"><label id="l-rtime">وقت التقرير <span class="auto-tag">تلقائي</span></label><input type="text" id="f-rtime" class="ro" readonly></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ القسم ٢: بيانات الرحلة ════ -->
+    <div class="sec card" data-sec>
+      <div class="card-head" onclick="toggleSec(this)">
+        <div class="sec-htext">
+          <span class="sec-ico">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M2 12h20M6 8l-4 4 4 4M18 8l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div class="card-title"><span class="sec-num">2</span> <span id="s2-title">بيانات الرحلة</span></div>
+        </div>
+        <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="sec-body">
+
+        <div class="sub-h first" id="sh-type">نوع المناولة</div>
+        <div class="seg" id="handling">
+          <button type="button" data-v="turnaround"  onclick="segPick(this)" id="l-turnaround">Turnaround</button>
+          <button type="button" data-v="transit"     onclick="segPick(this)" id="l-transit">Transit</button>
+          <button type="button" data-v="terminating" onclick="segPick(this)" id="l-terminating">Terminating</button>
+          <button type="button" data-v="originating" onclick="segPick(this)" id="l-originating">Originating</button>
+        </div>
+
+        <div class="sub-h arr-only" id="sh-arr">الوصول (Flight Arrival)</div>
+        <div class="form-grid arr-only">
+          <div class="field"><label id="l-arr-flight">Flight No.</label><input type="text" id="f-arr-flight" placeholder="KU745"></div>
+          <div class="field"><label id="l-arr-from">From</label><input type="text" id="f-arr-from" placeholder="KWI"></div>
+          <div class="field"><label id="l-arr-pf">Pax Load (F)</label><input type="number" min="0" id="f-arr-pf" placeholder="0" oninput="calcTotals()"></div>
+          <div class="field"><label id="l-arr-pj">Pax Load (J)</label><input type="number" min="0" id="f-arr-pj" placeholder="0" oninput="calcTotals()"></div>
+          <div class="field"><label id="l-arr-py">Pax Load (Y)</label><input type="number" min="0" id="f-arr-py" placeholder="0" oninput="calcTotals()"></div>
+          <div class="field"><label id="l-arr-total">Total Pax <span class="auto-tag">تلقائي</span></label><input type="text" id="f-arr-total" class="ro" readonly tabindex="-1"></div>
+          <div class="field"><label>STA</label><input type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" class="time24" id="f-sta"></div>
+          <div class="field"><label>ATA</label><input type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" class="time24" id="f-ata"></div>
+        </div>
+
+        <div class="sub-h dep-only" id="sh-dep">المغادرة (Flight Departure)</div>
+        <div class="form-grid dep-only">
+          <div class="field"><label id="l-dep-flight">Flight No.</label><input type="text" id="f-dep-flight" placeholder="KU746"></div>
+          <div class="field"><label id="l-dep-to">To</label><input type="text" id="f-dep-to" placeholder="KWI"></div>
+          <div class="field"><label id="l-dep-pf">Pax Load (F)</label><input type="number" min="0" id="f-dep-pf" placeholder="0" oninput="calcTotals()"></div>
+          <div class="field"><label id="l-dep-pj">Pax Load (J)</label><input type="number" min="0" id="f-dep-pj" placeholder="0" oninput="calcTotals()"></div>
+          <div class="field"><label id="l-dep-py">Pax Load (Y)</label><input type="number" min="0" id="f-dep-py" placeholder="0" oninput="calcTotals()"></div>
+          <div class="field"><label id="l-dep-total">Total Pax <span class="auto-tag">تلقائي</span></label><input type="text" id="f-dep-total" class="ro" readonly tabindex="-1"></div>
+          <div class="field"><label>STD</label><input type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" class="time24" id="f-std" oninput="calcGain()" onblur="calcGain()"></div>
+          <div class="field"><label>ATD</label><input type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" class="time24" id="f-atd" oninput="calcGain()" onblur="calcGain()"></div>
+        </div>
+
+        <div class="sub-h dep-gain" id="sh-times">الأوقات</div>
+        <div class="form-grid tight dep-gain">
+          <div class="field"><label id="l-gain">GAIN Time <span class="auto-tag">تلقائي</span></label><input type="text" id="f-gain" class="ro" readonly tabindex="-1"></div>
+        </div>
+
+        <div class="sub-h" id="sh-delay">التأخير</div>
+        <div class="form-grid">
+          <div class="field"><label id="l-dly-amount">DLY Amount</label><input type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" class="time24" id="f-dly-amount"></div>
+          <div class="field"><label id="l-delay-code">Delay Code</label><input type="text" id="f-delay-code" placeholder="93"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ════ القسم ٣: جدول الأنشطة (Time Chart) ════ -->
+    <div class="sec card" data-sec>
+      <div class="card-head" onclick="toggleSec(this)">
+        <div class="sec-htext">
+          <span class="sec-ico">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <div class="card-title"><span class="sec-num">3</span> <span id="s3-title">جدول الأنشطة (Time Chart)</span></div>
+        </div>
+        <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="sec-body">
+        <div class="tbl-wrap">
+          <table class="tc">
+            <thead>
+              <tr>
+                <th class="tc-act" id="th-act">Activities</th>
+                <th id="th-as">Actual Start</th>
+                <th id="th-af">Actual Finish</th>
+                <th id="th-dur">Duration</th>
+                <th id="th-rem">Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="tc-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ القسم ٤: سجل الباصات ════ -->
+    <div class="sec card" data-sec>
+      <div class="card-head" onclick="toggleSec(this)">
+        <div class="sec-htext">
+          <span class="sec-ico">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 11h18M7 21v-2m10 2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <div class="card-title"><span class="sec-num">4</span> <span id="s4-title">سجل الباصات (Arr / Dep Busses Record)</span></div>
+        </div>
+        <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="sec-body">
+
+        <div class="sub-h first arr-only" id="sh-bus-arr">باصات الوصول (Arrival)</div>
+        <div id="bus-arr" class="arr-only"></div>
+        <button type="button" class="add-row arr-only" onclick="addBus('arr')">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          <span id="add-bus-arr-l">إضافة باص</span>
+        </button>
+
+        <div class="sub-h dep-only" id="sh-bus-dep">باصات المغادرة (Departure)</div>
+        <div id="bus-dep" class="dep-only"></div>
+        <button type="button" class="add-row dep-only" onclick="addBus('dep')">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          <span id="add-bus-dep-l">إضافة باص</span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ════ ملاحظات ════ -->
+    <div class="sec card" data-sec>
+      <div class="card-head" onclick="toggleSec(this)">
+        <div class="sec-htext">
+          <span class="sec-ico">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M4 5h16M4 10h16M4 15h10M4 20h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <div class="card-title"><span id="s-remarks-title">ملاحظات (Remarks)</span></div>
+        </div>
+        <svg class="sec-chev" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="sec-body">
+        <div class="field" style="margin:0;">
+          <textarea id="f-remarks" rows="4" placeholder="..."></textarea>
+        </div>
+      </div>
+    </div>
+
+  </form>
+
+  <!-- شريط الإجراءات السفلي -->
+  <div class="action-bar">
+    <div class="ab-info">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="ab-info-l">يُحفظ كمسودة قابلة للتعديل خلال ٢٤ ساعة</span>
+    </div>
+    <div class="ab-btns">
+      <button type="button" class="btn-icon" onclick="window.print()">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="6" y="14" width="12" height="7" stroke="currentColor" stroke-width="2"/></svg>
+        <span id="print-l">طباعة</span>
+      </button>
+      <button type="button" class="btn-icon" onclick="saveDraft()">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="currentColor" stroke-width="2"/><polyline points="17 21 17 13 7 13 7 21" stroke="currentColor" stroke-width="2"/><polyline points="7 3 7 8 15 8" stroke="currentColor" stroke-width="2"/></svg>
+        <span id="save-l">حفظ كمسودة</span>
+      </button>
+      <button type="button" class="btn-primary" onclick="submitReport()">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="submit-l">إرسال</span>
+      </button>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script src="nav.js?v=15"></script>
+<script>
+/* ════════════════════════════════════════════════
+   نموذج التنسيق — Coordination Sheet / Time Chart
+   الحفظ: POST/PUT /coordination
+════════════════════════════════════════════════ */
+
+const KIND      = 'coordination';
+
+const params  = new URLSearchParams(location.search);
+const EDIT_ID = /^\d+$/.test(params.get('id') || '') ? params.get('id') : null;
+let   editId  = EDIT_ID;
+let   lang    = localStorage.getItem('lang') || 'en';
+
+/* ── أنشطة جدول الوقت (ترتيب الورقة الأصلية) ──
+   side: 'arr' وصول · 'dep' مغادرة · 'both' مشترك يظهر دائماً */
+const ACTIVITIES = [
+  { k:'blocks_in',            side:'arr',  en:'Blocks In',            ar:'دخول الموقف' },
+  { k:'position_plb',         side:'arr',  en:'Position PLB/Step',    ar:'تركيب الجسر/السلّم' },
+  { k:'open_door',            side:'arr',  en:'Door Open',            ar:'فتح الباب' },
+  { k:'pax_deplane',          side:'arr',  en:'Passenger Deplane',    ar:'نزول الركاب' },
+  { k:'customs_clearance',    side:'arr',  en:'Customs Clearance',    ar:'التخليص الجمركي' },
+  { k:'cabin_cleaning',       side:'both', en:'Cabin Cleaning',       ar:'تنظيف المقصورة' },
+  { k:'galley_services',      side:'both', en:'Galley Services',      ar:'خدمات المطبخ' },
+  { k:'cabin_security_check', side:'both', en:'Cabin Security Check', ar:'الفحص الأمني للمقصورة' },
+  { k:'boarding_clearance',   side:'dep',  en:'Boarding Clearance',   ar:'إذن الصعود' },
+  { k:'pax_enplane',          side:'dep',  en:'Passengers Enplane',   ar:'صعود الركاب' },
+  { k:'top_finalization',     side:'dep',  en:'TOP Finalization',     ar:'إنهاء TOP' },
+  { k:'fwd_unloading',        side:'arr',  en:'FWD Unloading',        ar:'تفريغ أمامي' },
+  { k:'fwd_loading',          side:'dep',  en:'FWD Loading',          ar:'تحميل أمامي' },
+  { k:'aft_unloading',        side:'arr',  en:'AFT Unloading',        ar:'تفريغ خلفي' },
+  { k:'aft_loading',          side:'dep',  en:'AFT Loading',          ar:'تحميل خلفي' },
+  { k:'bulk_unloading',       side:'arr',  en:'Bulk Unloading',       ar:'تفريغ السائب' },
+  { k:'bulk_loading',         side:'dep',  en:'Bulk Loading',         ar:'تحميل السائب' },
+  { k:'gpu_support',          side:'both', en:'GPU Support',          ar:'دعم GPU' },
+  { k:'acu_support',          side:'both', en:'ACU Support',          ar:'دعم ACU' },
+  { k:'asu_support',          side:'both', en:'ASU Support',          ar:'دعم ASU' },
+  { k:'refueling',            side:'both', en:'Refueling',            ar:'التزوّد بالوقود' },
+  { k:'close_door',           side:'dep',  en:'Door Close',           ar:'إغلاق الباب' },
+  { k:'remove_plb',           side:'dep',  en:'Remove PLB/Step',      ar:'رفع الجسر/السلّم' },
+  { k:'pushback',             side:'dep',  en:'Pushback/Block-out',   ar:'الدفع/الخروج من الموقف' },
+];
+
+/* ── الترجمات ── */
+const T = {
+  ar: {
+    title:'نموذج التنسيق', sub: EDIT_ID ? 'تعديل مسودة' : 'تعبئة نموذج جديد', back:'رجوع', chip:'تنسيق',
+    s1:'معلومات عامة', s2:'بيانات الرحلة',
+    s3:'جدول الأنشطة (Time Chart)', s4:'سجل الباصات (Arr / Dep Busses Record)', remarks:'ملاحظات (Remarks)',
+    date:'التاريخ', actype:'نوع الطائرة (AC Type)', acreg:'تسجيل الطائرة (AC Reg)',
+    sup:'اسم المشرف', rtime:'وقت التقرير', auto:'تلقائي',
+    sh_arr:'الوصول (Flight Arrival)', sh_dep:'المغادرة (Flight Departure)',
+    flight_no:'رقم الرحلة',
+    arr_from:'قادمة من (From)', dep_to:'متجهة إلى (To)',
+    pax_f:'الركاب (F)', pax_j:'الركاب (J)', pax_y:'الركاب (Y)', pax_total:'إجمالي الركاب',
+    sh_type:'نوع المناولة',
+    turnaround:'ذهاب وعودة (Turnaround)', transit:'عبور (Transit)',
+    terminating:'منتهية (Terminating)', originating:'مُنشِئة (Originating)',
+    sh_times:'الأوقات', min:'دقيقة',
+    sh_delay:'التأخير', gain:'GAIN Time', dly_amount:'مقدار التأخير (DLY Amount)',
+    delay_code:'كود التأخير (Delay Code)',
+    th_act:'النشاط', th_as:'البداية الفعلية', th_af:'النهاية الفعلية', th_dur:'المدة', th_rem:'ملاحظات',
+    sh_bus_arr:'باصات الوصول (Arrival)', sh_bus_dep:'باصات المغادرة (Departure)',
+    add_bus:'إضافة باص', bus_no:'رقم الباص', bus_time:'الوقت',
+    ab_info:'يمكن حفظه كمسودة والعودة إليه للتعديل في أي وقت', print:'طباعة', save:'حفظ كمسودة', submit:'إنهاء',
+    req:'يرجى تعبئة التاريخ ورقم رحلة واحد على الأقل (وصول أو مغادرة)',
+    saved:'تم حفظ المسودة بنجاح', submitted:'تم حفظ النموذج',
+    load_err:'تعذّر تحميل النموذج',
+  },
+  en: {
+    title:'Coordination Sheet', sub: EDIT_ID ? 'Edit draft' : 'New sheet', back:'Back', chip:'Coordination',
+    s1:'General Information', s2:'Flight Data',
+    s3:'Activities Time Chart', s4:'Arr / Dep Busses Record', remarks:'Remarks',
+    date:'Date', actype:'AC Type', acreg:'AC Reg',
+    sup:'Supervisor', rtime:'Report Time', auto:'auto',
+    sh_arr:'Arrival', sh_dep:'Departure',
+    flight_no:'Flight No.',
+    arr_from:'From', dep_to:'To',
+    pax_f:'Pax Load (F)', pax_j:'Pax Load (J)', pax_y:'Pax Load (Y)', pax_total:'Total Pax',
+    sh_type:'Handling Type',
+    turnaround:'Turnaround', transit:'Transit', terminating:'Terminating', originating:'Originating',
+    sh_times:'Times', min:'min',
+    sh_delay:'Delay', gain:'GAIN Time', dly_amount:'DLY Amount',
+    delay_code:'Delay Code',
+    th_act:'Activities', th_as:'Actual Start', th_af:'Actual Finish', th_dur:'Duration', th_rem:'Remarks',
+    sh_bus_arr:'Arrival Busses', sh_bus_dep:'Departure Busses',
+    add_bus:'Add Bus', bus_no:'Bus No', bus_time:'Time',
+    ab_info:'Save as draft and come back to edit at any time', print:'Print', save:'Save Draft', submit:'Complete',
+    req:'Please fill the date and at least one flight number (arrival or departure)',
+    saved:'Draft saved successfully', submitted:'Sheet saved',
+    load_err:'Failed to load sheet',
+  },
+};
+
+/* ── طي/فتح الأقسام ── */
+function toggleSec(head) { head.closest('.sec').classList.toggle('collapsed'); }
+
+/* ── قراءة/كتابة القيم ── */
+const gv  = id => { const e = document.getElementById(id); return e ? e.value : ''; };
+const num = id => { const e = document.getElementById(id); return e ? (parseInt(e.value, 10) || 0) : 0; };
+const sv  = (id, v) => { const e = document.getElementById(id); if (e) e.value = (v ?? '') === '' ? '' : v; };
+
+/* ── حقول الوقت 24 ساعة — idempotent حتى لا تتكرر المستمعات عند إعادة البناء ── */
+function maskTime24(el){ let v = el.value.replace(/\D/g,'').slice(0,4); if (v.length>2) v = v.slice(0,2)+':'+v.slice(2); el.value = v; }
+function normTime24(el){ if(!el.value) return; const m = el.value.match(/^(\d{1,2}):?(\d{0,2})$/); if(!m){ el.value=''; return; } const h=Math.min(parseInt(m[1]||'0',10),23), mn=Math.min(parseInt(m[2]||'0',10),59); el.value = String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0'); }
+function attachTime24(root){
+  (root || document).querySelectorAll('.time24').forEach(el => {
+    if (el.dataset.t24) return;
+    el.dataset.t24 = '1';
+    el.addEventListener('input', () => maskTime24(el));
+    el.addEventListener('blur',  () => normTime24(el));
+  });
+}
+
+/* ════ الإظهار المشروط بنوع المناولة ════
+   Terminating وحده → الوصول فقط | Originating وحده → المغادرة فقط
+   Turnaround/Transit أو الاثنان معاً أو لا شيء → الكل */
+function handlingType() {
+  const b = document.querySelector('#handling button.on');
+  return b ? b.dataset.v : '';
+}
+
+function segPick(btn) {
+  btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  applyType();
+}
+
+function applyType() {
+  const v = handlingType();
+  // Terminating ⇒ الوصول فقط · Originating ⇒ المغادرة فقط · غيرهما (أو لا شيء) ⇒ الكل
+  const showArr = v !== 'originating';
+  const showDep = v !== 'terminating';
+  document.querySelectorAll('.arr-only').forEach(e => e.style.display = showArr ? '' : 'none');
+  document.querySelectorAll('.dep-only').forEach(e => e.style.display = showDep ? '' : 'none');
+  // GAIN = STD − ATD ⇒ يظهر كلما وُجدت مغادرة (أي ما عدا Terminating)
+  document.querySelectorAll('.dep-gain').forEach(e => e.style.display = showDep ? '' : 'none');
+  calcGain();
+  fixFirstSubH();
+}
+
+/* أول عنوان فرعي ظاهر في كل قسم لا يحمل خطاً فاصلاً علوياً */
+function fixFirstSubH() {
+  document.querySelectorAll('.sec-body').forEach(body => {
+    let first = true;
+    body.querySelectorAll('.sub-h').forEach(h => {
+      if (h.style.display === 'none') return;
+      h.classList.toggle('first', first);
+      first = false;
+    });
+  });
+}
+
+/* ════ الحسابات المشتقة ════ */
+const mins = s => { const m = /^(\d{1,2}):(\d{2})$/.exec(s || ''); return m ? +m[1] * 60 + +m[2] : null; };
+const dur  = (a, b) => (b - a + 1440) % 1440;      // يعالج تجاوز منتصف الليل
+// أقرب إزاحة بإشارة: موجب = بعده، سالب = قبله. dur() تلفّ الناتج فتصلح للمدد لا للفروق.
+const delta = (a, b) => { let d = b - a; if (d > 720) d -= 1440; if (d < -720) d += 1440; return d; };
+const hhmm = m => `${String(Math.floor(m / 60)).padStart(2,'0')}:${String(m % 60).padStart(2,'0')}`;
+
+/* مدة النشاط = النهاية − البداية */
+function calcDuration(tr) {
+  const g = f => mins(tr.querySelector(`[data-f="${f}"]`).value);
+  const out = tr.querySelector('[data-f="duration"]');
+  const as = g('actualStart'), af = g('actualFinish');
+  out.value = (as === null || af === null) ? '' : hhmm(dur(as, af));
+}
+
+function calcAllDurations() { document.querySelectorAll('#tc-body tr').forEach(calcDuration); }
+
+/* GAIN = STD − ATD بلا سالب (الخادم هو المرجع؛ هذا للعرض اللحظي) */
+function calcGain() {
+  const el = document.getElementById('f-gain');
+  if (!el) return;
+  if (handlingType() === 'terminating') { el.value = ''; return; }
+  const std = mins(gv('f-std')), atd = mins(gv('f-atd'));
+  el.value = (std === null || atd === null) ? '' : hhmm(Math.max(0, -delta(std, atd)));
+}
+
+/* إجمالي الركاب لكل جهة = F + J + Y */
+function calcTotals() {
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.value = v; };
+  set('f-arr-total', num('f-arr-pf') + num('f-arr-pj') + num('f-arr-py'));
+  set('f-dep-total', num('f-dep-pf') + num('f-dep-pj') + num('f-dep-py'));
+}
+
+/* ════ جدول الأنشطة ════ */
+function readActivities() {
+  return [...document.querySelectorAll('#tc-body tr')].map(tr => {
+    const o = { key: tr.dataset.k };
+    tr.querySelectorAll('.tc-i').forEach(i => { o[i.dataset.f] = i.value; });
+    return o;
+  });
+}
+
+/* يعيد بناء الجدول مع الحفاظ على القيم المدخلة (يُستدعى عند تبديل اللغة) */
+function renderActivities() {
+  const prev = {};
+  readActivities().forEach(a => { prev[a.key] = a; });
+
+  const cell = (k, f) => {
+    const v = (prev[k] && prev[k][f]) || '';
+    if (f === 'duration')
+      return `<td><input type="text" class="tc-i" data-f="duration" value="${esc(v)}" readonly tabindex="-1"></td>`;
+    if (f === 'remarks')
+      return `<td><input type="text" class="tc-i tc-rem" data-f="remarks" value="${esc(v)}" placeholder="..."></td>`;
+    return `<td><input type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" class="time24 tc-i" data-f="${f}" value="${esc(v)}"></td>`;
+  };
+
+  const sideCls = { arr:' arr-only', dep:' dep-only', both:'' };
+  const tb = document.getElementById('tc-body');
+  tb.innerHTML = ACTIVITIES.map(a => `
+    <tr data-k="${a.k}" class="tc-row${sideCls[a.side]}">
+      <td class="tc-act">${lang === 'ar' ? a.ar : a.en}</td>
+      ${cell(a.k,'actualStart')}${cell(a.k,'actualFinish')}${cell(a.k,'duration')}${cell(a.k,'remarks')}
+    </tr>`).join('');
+
+  attachTime24(tb);
+  // تُسجَّل بعد مستمعات القناع على العنصر نفسه، فتُنفَّذ بعد normTime24 وتقرأ القيمة المصححة
+  tb.querySelectorAll('.tc-i.time24').forEach(el => {
+    const recalc = () => calcDuration(el.closest('tr'));
+    el.addEventListener('input', recalc);
+    el.addEventListener('blur',  recalc);
+  });
+
+  calcAllDurations();
+  applyType();          // الصفوف أُعيد إنشاؤها فيلزم إعادة تطبيق الإخفاء
+}
+
+function setActivities(arr) {
+  const map = {};
+  (arr || []).forEach(a => { if (a && a.key) map[a.key] = a; });
+  document.querySelectorAll('#tc-body tr').forEach(tr => {
+    const v = map[tr.dataset.k];
+    if (!v) return;
+    tr.querySelectorAll('.tc-i').forEach(i => { if (v[i.dataset.f] != null) i.value = v[i.dataset.f]; });
+  });
+}
+
+/* ════ سجل الباصات ════ */
+const busWrap = w => document.getElementById(w === 'arr' ? 'bus-arr' : 'bus-dep');
+
+function addBus(which, v) {
+  v = v || {};
+  const t = T[lang];
+  const row = document.createElement('div');
+  row.className = 'bus-row';
+  row.innerHTML = `
+    <div class="field" style="margin:0;"><label>${t.bus_no}</label><input type="text" class="bus-no" value="${esc(v.busNo)}" placeholder="B-12"></div>
+    <div class="field" style="margin:0;"><label>${t.bus_time}</label><input type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" class="time24 bus-time" value="${esc(v.time)}"></div>
+    <button type="button" class="del-x" title="${t.bus_no}" onclick="this.closest('.bus-row').remove()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>`;
+  busWrap(which).appendChild(row);
+  attachTime24(row);
+}
+
+/* بلا تصفية — التصفية تتم في buildBody فقط، حتى لا تُفقد الصفوف الفارغة عند تبديل اللغة */
+function readBuses(which) {
+  return [...busWrap(which).querySelectorAll('.bus-row')].map(r => ({
+    busNo: r.querySelector('.bus-no').value,
+    time:  r.querySelector('.bus-time').value,
+  }));
+}
+
+function renderBuses() {
+  ['arr','dep'].forEach(w => {
+    const data = readBuses(w);
+    busWrap(w).innerHTML = '';
+    data.forEach(b => addBus(w, b));
+  });
+}
+
+/* ── يبني جسم الطلب بصيغة الـ API (DTO) ── */
+function buildBody(submit) {
+  const notEmpty = b => b.busNo || b.time;
+  return {
+    submit,
+    // معلومات عامة
+    flightDate: gv('f-date'), acType: gv('f-actype'), acReg: gv('f-acreg'),
+    // الرحلة
+    arrFlightNo: gv('f-arr-flight'), arrFrom: gv('f-arr-from'),
+    arrPaxF: num('f-arr-pf'), arrPaxJ: num('f-arr-pj'), arrPaxY: num('f-arr-py'),
+    depFlightNo: gv('f-dep-flight'), depTo: gv('f-dep-to'),
+    depPaxF: num('f-dep-pf'), depPaxJ: num('f-dep-pj'), depPaxY: num('f-dep-py'),
+    turnaround:  handlingType() === 'turnaround',
+    transit:     handlingType() === 'transit',
+    terminating: handlingType() === 'terminating',
+    originating: handlingType() === 'originating',
+    sta: gv('f-sta'), ata: gv('f-ata'),
+    std: gv('f-std'), atd: gv('f-atd'),
+    dlyAmount: gv('f-dly-amount'), delayCode: gv('f-delay-code'),   // GAIN يُحسب في الخادم
+    // الجداول
+    activities: readActivities(),
+    busesArrival: readBuses('arr').filter(notEmpty),
+    busesDeparture: readBuses('dep').filter(notEmpty),
+    remarks: gv('f-remarks'),
+  };
+}
+
+/* ── إرسال للـ API (إنشاء أو تعديل) ── */
+async function send(submit) {
+  const body = buildBody(submit);
+  const url = editId ? `${SGS.API}/${KIND}/${editId}` : `${SGS.API}/${KIND}`;
+  const res = await fetch(url, { method: editId ? 'PUT' : 'POST', headers: SGS.HJ(), body: JSON.stringify(body) });
+  if (res.status === 401) { localStorage.clear(); location.href = 'index.html'; return null; }
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || ('HTTP ' + res.status)); }
+  return res.json();
+}
+
+/* ── تعبئة النموذج عند التعديل ── */
+async function loadForEdit() {
+  const res = await fetch(`${SGS.API}/${KIND}/${editId}`, { headers: SGS.H() });
+  if (res.status === 401) { localStorage.clear(); location.href = 'index.html'; return; }
+  if (!res.ok) { toast(T[lang].load_err); return; }
+  const d = await res.json();
+
+  if (d.flightDate) sv('f-date', String(d.flightDate).slice(0, 10));
+  sv('f-actype', d.acType); sv('f-acreg', d.acReg);
+
+  sv('f-arr-flight', d.arrFlightNo); sv('f-arr-from', d.arrFrom);
+  sv('f-arr-pf', d.arrPaxF); sv('f-arr-pj', d.arrPaxJ); sv('f-arr-py', d.arrPaxY);
+  sv('f-dep-flight', d.depFlightNo); sv('f-dep-to', d.depTo);
+  sv('f-dep-pf', d.depPaxF); sv('f-dep-pj', d.depPaxJ); sv('f-dep-py', d.depPaxY);
+
+  const ht = d.turnaround ? 'turnaround' : d.transit ? 'transit'
+           : d.terminating ? 'terminating' : d.originating ? 'originating' : '';
+  document.querySelectorAll('#handling button').forEach(b => b.classList.toggle('on', b.dataset.v === ht));
+
+  sv('f-sta', d.sta); sv('f-ata', d.ata);
+  sv('f-std', d.std); sv('f-atd', d.atd);
+  sv('f-gain', d.gainTime); sv('f-dly-amount', d.dlyAmount); sv('f-delay-code', d.delayCode);
+
+  setActivities(d.activities);
+  calcAllDurations(); calcGain(); calcTotals();
+  busWrap('arr').innerHTML = ''; (d.busesArrival   || []).forEach(b => addBus('arr', b));
+  busWrap('dep').innerHTML = ''; (d.busesDeparture || []).forEach(b => addBus('dep', b));
+
+  sv('f-remarks', d.remarks);
+  applyType();
+}
+
+/* ── تحقق: التاريخ + رقم رحلة واحد على الأقل ──
+   (Originating لها مغادرة فقط، و Terminating لها وصول فقط) */
+function validate() {
+  const t = T[lang];
+  const date = document.getElementById('f-date');
+  const arr  = document.getElementById('f-arr-flight');
+  const dep  = document.getElementById('f-dep-flight');
+  if (!date.value || (!arr.value.trim() && !dep.value.trim())) {
+    showErr(t.req);
+    if (!date.value) date.closest('.sec').classList.remove('collapsed');
+    arr.closest('.sec').classList.remove('collapsed');
+    return false;
+  }
+  document.getElementById('err-alert').classList.remove('show');
+  return true;
+}
+
+function showErr(msg) {
+  document.getElementById('err-txt').textContent = msg;
+  document.getElementById('err-alert').classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ── حفظ كمسودة ── */
+async function saveDraft() {
+  try {
+    const r = await send(false);
+    if (!r) return;
+    if (r.id && !editId) { editId = r.id; history.replaceState(null, '', `coordination_form.html?id=${editId}`); }
+    document.getElementById('f-rtime').value = nowStr();
+    document.getElementById('err-alert').classList.remove('show');
+    toast(T[lang].saved);
+  } catch (e) { showErr(e.message); }
+}
+
+/* ── إرسال للاعتماد ── */
+async function submitReport() {
+  if (!validate()) return;
+  try {
+    const r = await send(true);
+    if (!r) return;
+    toast(T[lang].submitted);
+    setTimeout(() => location.href = 'coordination.html', 1400);
+  } catch (e) { showErr(e.message); }
+}
+
+/* ── Toast ── */
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ── وقت الآن نصياً ── */
+function nowStr() {
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/* ── تطبيق اللغة (يُستدعى من nav.js) ── */
+function setLang(l) {
+  lang = l;
+  const t = T[l];
+  const set  = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  const setH = (id, v) => { const e = document.getElementById(id); if (e) e.innerHTML   = v; };
+
+  set('t-title', t.title); set('t-sub', t.sub); set('t-back-l', t.back);
+  set('dir-chip', t.chip);
+  set('s1-title', t.s1); set('s2-title', t.s2);
+  set('s3-title', t.s3); set('s4-title', t.s4); set('s-remarks-title', t.remarks);
+
+  const lbl = {
+    'l-actype':t.actype, 'l-acreg':t.acreg,
+    'sh-arr':t.sh_arr, 'sh-dep':t.sh_dep,
+    'l-arr-flight':t.flight_no, 'l-arr-from':t.arr_from,
+    'l-arr-pf':t.pax_f, 'l-arr-pj':t.pax_j, 'l-arr-py':t.pax_y,
+    'l-dep-flight':t.flight_no, 'l-dep-to':t.dep_to,
+    'l-dep-pf':t.pax_f, 'l-dep-pj':t.pax_j, 'l-dep-py':t.pax_y,
+    'sh-type':t.sh_type,
+    'l-turnaround':t.turnaround, 'l-transit':t.transit,
+    'l-terminating':t.terminating, 'l-originating':t.originating,
+    'sh-times':t.sh_times, 'sh-delay':t.sh_delay,
+    'l-dly-amount':t.dly_amount, 'l-delay-code':t.delay_code,
+    'th-act':t.th_act, 'th-as':t.th_as, 'th-af':t.th_af, 'th-dur':t.th_dur, 'th-rem':t.th_rem,
+    'sh-bus-arr':t.sh_bus_arr, 'sh-bus-dep':t.sh_bus_dep,
+    'add-bus-arr-l':t.add_bus, 'add-bus-dep-l':t.add_bus,
+    'ab-info-l':t.ab_info, 'print-l':t.print, 'save-l':t.save, 'submit-l':t.submit,
+  };
+  for (const [id, v] of Object.entries(lbl)) set(id, v);
+
+  // تسميات بوسم "تلقائي"
+  const setAuto = (id, term) => setH(id, `${term} <span class="auto-tag">${t.auto}</span>`);
+  setAuto('l-date', t.date); setAuto('l-sup', t.sup); setAuto('l-rtime', t.rtime);
+  setAuto('l-gain', t.gain); setAuto('l-arr-total', t.pax_total); setAuto('l-dep-total', t.pax_total);
+
+  // إعادة بناء الجدول والباصات بالتسميات الجديدة (القيم محفوظة)
+  renderActivities();   // تستدعي calcAllDurations ثم applyType في نهايتها
+  renderBuses();
+}
+
+/* ── الإقلاع ── */
+document.addEventListener('DOMContentLoaded', () => {
+  renderActivities();
+  attachTime24();
+  // قيم تلقائية
+  const today = new Date();
+  document.getElementById('f-date').value =
+    `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  document.getElementById('f-sup').value = (window.SGS && SGS.uname) ? SGS.uname : '';
+  document.getElementById('f-rtime').value = nowStr();
+  setLang(lang);        // تستدعي renderActivities → calcAllDurations → applyType
+  calcGain(); calcTotals();
+  if (editId) loadForEdit();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGS Forms — خطأ</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--g:#006C4E;--gm:#009966;--gl:#E8F5F0;--gold:#C9A84C;--w:#fff;--bg:#F4F6F9;--bd:#E2E8F0;--tx:#0F172A;--mu:#64748B;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--tx);
+  min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 20px;text-align:center;position:relative;overflow:hidden;
+}
+/* خلفية زخرفية ناعمة */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 15% 15%,rgba(0,108,78,.06) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 85%,rgba(201,168,76,.07) 0%,transparent 55%);
+}
+.wrap{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;animation:rise .5s cubic-bezier(.2,.7,.3,1);}
+@keyframes rise{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+
+.logo-mark{
+  width:58px;height:58px;border-radius:16px;margin-bottom:26px;
+  background:linear-gradient(135deg,var(--g),var(--gm));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 10px 26px rgba(0,108,78,.28);
+}
+.code{
+  font-family:'DM Mono',monospace;font-weight:500;line-height:.9;
+  font-size:clamp(120px,28vw,240px);
+  background:linear-gradient(135deg,var(--g),var(--gm) 55%,var(--gold));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:var(--g);
+  letter-spacing:-2px;user-select:none;
+}
+.bar{width:64px;height:4px;border-radius:3px;background:var(--gold);margin:6px auto 22px;}
+.ttl{font-size:clamp(20px,4vw,28px);font-weight:800;margin-bottom:10px;}
+.sub{font-size:15px;color:var(--mu);max-width:440px;line-height:1.7;margin-bottom:30px;}
+.actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:12px 24px;border-radius:12px;cursor:pointer;
+  font-size:14px;font-weight:700;font-family:'Tajawal',sans-serif;
+  text-decoration:none;border:1.5px solid var(--bd);
+  background:var(--w);color:var(--tx);transition:all .15s;
+}
+.btn:hover{border-color:var(--g);color:var(--g);background:var(--gl);}
+.btn.primary{
+  background:linear-gradient(135deg,var(--g),var(--gm));color:var(--w);border:none;
+  box-shadow:0 4px 14px rgba(0,108,78,.3);
+}
+.btn.primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,108,78,.38);color:var(--w);}
+/* مبدّل اللغة */
+.lngtg{position:fixed;top:18px;inset-inline-end:18px;z-index:2;display:flex;background:var(--w);border:1px solid var(--bd);border-radius:9px;padding:3px;gap:2px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.lbtn{padding:5px 13px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:'Tajawal',sans-serif;background:transparent;color:var(--mu);transition:all .2s;}
+.lbtn.on{background:var(--gl);color:var(--g);}
+.foot{position:fixed;bottom:16px;left:0;right:0;font-size:11px;color:var(--mu);z-index:1;}
+</style>
+</head>
+<body>
+  <div class="lngtg">
+    <button class="lbtn" id="lng-ar" onclick="setLang('ar')">العربية</button>
+    <button class="lbtn" id="lng-en" onclick="setLang('en')">English</button>
+  </div>
+
+  <div class="wrap">
+    <div class="logo-mark">
+      <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="white" stroke-width="2"/>
+        <polyline points="14 2 14 8 20 8" stroke="white" stroke-width="2"/>
+        <line x1="16" y1="13" x2="8" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <line x1="16" y1="17" x2="8" y2="17" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div class="code" id="code">404</div>
+    <div class="bar"></div>
+    <div class="ttl" id="ttl"></div>
+    <div class="sub" id="sub"></div>
+
+    <div class="actions">
+      <a class="btn primary" id="btn-home"></a>
+      <a class="btn" href="javascript:void(0)" id="btn-back"></a>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+
+<script>
+// ── النصوص حسب الحالة (ثنائي اللغة) ──
+const MESSAGES = {
+  400: { ar:['طلب غير صالح','الطلب الذي أرسلته غير صحيح أو غير مكتمل.'],            en:['Bad Request','The request could not be understood by the server.'] },
+  401: { ar:['غير مُصرّح','يلزم تسجيل الدخول للوصول إلى هذه الصفحة.'],               en:['Unauthorized','You need to sign in to access this page.'] },
+  403: { ar:['الوصول ممنوع','ليس لديك صلاحية للوصول إلى هذه الصفحة.'],              en:['Forbidden','You don’t have permission to access this page.'] },
+  404: { ar:['الصفحة غير موجودة','عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.'], en:['Page Not Found','Sorry, the page you’re looking for doesn’t exist or was moved.'] },
+  500: { ar:['خطأ في الخادم','حدث خطأ غير متوقع من جانب الخادم. حاول لاحقاً.'],       en:['Server Error','An unexpected error occurred on the server. Please try again later.'] },
+  502: { ar:['بوابة غير صالحة','تعذّر الوصول إلى الخادم حالياً. حاول لاحقاً.'],         en:['Bad Gateway','The server is unreachable right now. Please try again later.'] },
+  503: { ar:['الخدمة غير متاحة','الخدمة غير متاحة مؤقتاً، نعمل على إعادتها قريباً.'],   en:['Service Unavailable','The service is temporarily unavailable. Please try again soon.'] },
+};
+const GENERIC = { ar:['حدث خطأ','حدث خطأ غير متوقع. يمكنك العودة إلى الصفحة الرئيسية.'], en:['Something went wrong','An unexpected error occurred. You can return to the homepage.'] };
+const UI = {
+  ar:{ home:'العودة للرئيسية', back:'الصفحة السابقة', foot:'الشركة السعودية للخدمات الأرضية © 2026' },
+  en:{ home:'Back to Home',    back:'Go Back',        foot:'Saudi Ground Services Co. © 2026' },
+};
+
+// ── قراءة رقم الخطأ من الرابط (افتراضي 404) ──
+const params = new URLSearchParams(location.search);
+let code = parseInt(params.get('code'), 10);
+if (!Number.isInteger(code) || code < 100 || code > 599) code = 404;
+
+let lang = localStorage.getItem('lang') || 'ar';
+
+function render(){
+  const m  = MESSAGES[code] || GENERIC;
+  const tx = m[lang] || m.ar;
+  const ui = UI[lang] || UI.ar;
+
+  document.documentElement.lang = lang;
+  document.documentElement.dir  = lang === 'ar' ? 'rtl' : 'ltr';
+
+  document.getElementById('code').textContent = String(code);   // textContent = آمن ضد XSS
+  document.getElementById('ttl').textContent  = tx[0];
+  document.getElementById('sub').textContent  = tx[1];
+  document.getElementById('foot').textContent = ui.foot;
+  document.title = `SGS Forms — ${code}`;
+
+  // زر العودة للرئيسية: حسب حالة تسجيل الدخول
+  const loggedIn = !!localStorage.getItem('token');
+  const home = document.getElementById('btn-home');
+  home.textContent = ui.home;
+  home.href = loggedIn ? 'main.html' : 'index.html';
+
+  const back = document.getElementById('btn-back');
+  back.textContent = ui.back;
+
+  document.getElementById('lng-ar').classList.toggle('on', lang === 'ar');
+  document.getElementById('lng-en').classList.toggle('on', lang === 'en');
+}
+
+function setLang(l){ lang = l; localStorage.setItem('lang', l); render(); }
+
+document.getElementById('btn-back').addEventListener('click', () => {
+  if (history.length > 1) history.back();
+  else location.href = localStorage.getItem('token') ? 'main.html' : 'index.html';
+});
+
+render();
+</script>
+</body>
+</html>

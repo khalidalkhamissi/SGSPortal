@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGS Forms — تسجيل الدخول</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--g:#006C4E;--gm:#009966;--gl:#E8F5F0;--gold:#C9A84C;--w:#fff;--bg:#F4F6F9;--bd:#E2E8F0;--tx:#0F172A;--mu:#64748B;--red:#DC2626;--redl:#FEF2F2;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{font-family:'Tajawal',sans-serif;min-height:100%;background:var(--bg);display:flex;overflow:hidden;}
+/* Left panel */
+.lp{ width:52%;background:var(--g); display:flex;flex-direction:column;align-items:center;justify-content:center; padding:60px 40px;position:relative;overflow:hidden; }
+.lp::before{ content:'';position:absolute;inset:0; background:
+  radial-gradient(ellipse at 15% 85%,rgba(201,168,76,.2) 0%,transparent 55%),
+  radial-gradient(ellipse at 85% 15%,rgba(255,255,255,.07) 0%,transparent 50%); }
+.lp-plane{position:relative;z-index:2;animation:float 5s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-14px);}}
+.lp-logo img{display:block;width:340px;max-width:72vw;height:auto;}
+.lp-text{position:relative;z-index:2;text-align:center;margin-top:28px;color:var(--w);}
+.lp-text h1{font-size:27px;font-weight:800;line-height:1.3;}
+.gold-bar{width:44px;height:3px;background:var(--gold);border-radius:2px;margin:14px auto;}
+.lp-text p{font-size:13px;opacity:.65;font-weight:300;}
+.lp-stats{position:relative;z-index:2;display:flex;gap:36px;margin-top:40px;}
+.lp-stat{text-align:center;color:var(--w);}
+.lp-stat span{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--gold);display:block;line-height:1;}
+.lp-stat small{font-size:10px;opacity:.6;margin-top:4px;display:block;}
+/* Right panel */
+.rp{ flex:1;display:flex;flex-direction:column; align-items:center;justify-content:center; padding:48px 40px;background:var(--w);position:relative; animation:slideIn .4s ease; }
+@keyframes slideIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+.lngtg{ position:absolute;top:20px;left:20px; display:flex;background:var(--bg);border-radius:8px;padding:3px;gap:2px; }
+html[dir="ltr"] .lngtg{left:auto;right:20px;}
+.lbtn{ padding:5px 14px;border-radius:6px;border:none;cursor:pointer; font-size:12px;font-weight:600;font-family:'Tajawal',sans-serif; background:transparent;color:var(--mu);transition:all .2s; }
+.lbtn.on{background:var(--w);color:var(--g);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.logo-mark{ width:54px;height:54px;border-radius:16px;margin-bottom:22px; background:linear-gradient(135deg,var(--g),var(--gm)); display:flex;align-items:center;justify-content:center; box-shadow:0 8px 24px rgba(0,108,78,.25); }
+.ttl{font-size:23px;font-weight:800;color:var(--tx);margin-bottom:4px;}
+.sub{font-size:13px;color:var(--mu);margin-bottom:30px;}
+.frm{width:100%;max-width:340px;}
+.fld{margin-bottom:16px;}
+.fld label{display:block;font-size:12px;font-weight:600;color:var(--tx);margin-bottom:6px;}
+.iw{position:relative;display:flex;align-items:center;}
+.iico{position:absolute;right:13px;color:var(--mu);pointer-events:none;display:flex;}
+html[dir="ltr"] .iico{right:auto;left:13px;}
+.iw input{ width:100%;padding:11px 42px 11px 14px; border:1.5px solid var(--bd);border-radius:10px; font-size:13px;font-family:'Tajawal',sans-serif; color:var(--tx);background:var(--w);outline:none; transition:border-color .2s,box-shadow .2s; }
+html[dir="ltr"] .iw input{padding:11px 14px 11px 42px;}
+.iw input:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(0,108,78,.1);}
+.iw input.err{border-color:var(--red);}
+.eye{ position:absolute;left:12px;background:none;border:none; cursor:pointer;color:var(--mu);display:flex;transition:color .2s; }
+html[dir="ltr"] .eye{left:auto;right:12px;}
+.eye:hover{color:var(--g);}
+.errmsg{ display:none;background:var(--redl);color:var(--red); border-radius:9px;padding:10px 13px;font-size:12px; margin-bottom:14px;align-items:center;gap:7px; }
+.errmsg.show{display:flex;}
+.sbmt{ width:100%;padding:12px;border:none;border-radius:11px;cursor:pointer; background:linear-gradient(135deg,var(--g),var(--gm));color:var(--w); font-size:15px;font-weight:700;font-family:'Tajawal',sans-serif; box-shadow:0 4px 14px rgba(0,108,78,.3); display:flex;align-items:center;justify-content:center;gap:8px; transition:all .15s; }
+.sbmt:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,108,78,.35);}
+.sbmt:disabled{opacity:.65;cursor:not-allowed;transform:none;}
+.sbmt .spin{display:none;width:17px;height:17px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spn .7s linear infinite;}
+@keyframes spn{to{transform:rotate(360deg)}}
+.sbmt.loading .spin{display:block;}
+.footer{margin-top:26px;font-size:11px;color:var(--mu);text-align:center;}
+/* Mobile */
+@media(max-width:680px){ body{overflow:auto;} .lp{display:none;} .rp{min-height:100dvh;padding:40px 24px;} .lngtg{top:14px;left:14px;} html[dir="ltr"] .lngtg{left:auto;right:14px;} }
+</style>
+</head>
+<body>
+<!-- Left decorative -->
+<div class="lp">
+  <div class="lp-plane">
+    <div class="lp-logo"><img src="SGS logo.png" alt="SGS"></div>
+  </div>
+  <div class="lp-text">
+    <h1 id="lp-h1">منظومة تقارير<br>مناولة الرحلات</h1>
+    <div class="gold-bar"></div>
+    <p id="lp-p">الشركة السعودية للخدمات الأرضية</p>
+  </div>
+</div>
+
+<!-- Right form -->
+<div class="rp">
+  <div class="lngtg">
+    <button class="lbtn on" onclick="setLang('ar')">العربية</button>
+    <button class="lbtn" onclick="setLang('en')">English</button>
+  </div>
+
+  <div class="logo-mark">
+    <svg width="26" height="26" fill="none" viewBox="0 0 24 24">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="white" stroke-width="2"/>
+      <polyline points="14 2 14 8 20 8" stroke="white" stroke-width="2"/>
+      <line x1="16" y1="13" x2="8" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <line x1="16" y1="17" x2="8" y2="17" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="ttl" id="ttl">تسجيل الدخول</div>
+  <div class="sub" id="sub">أدخل بياناتك للوصول إلى منظومة التقارير</div>
+
+  <div class="frm">
+    <div class="errmsg" id="errmsg">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="errtxt"></span>
+    </div>
+
+    <div class="fld">
+      <label id="l-em">البريد الإلكتروني</label>
+      <div class="iw">
+        <span class="iico"><svg width="15" height="15" fill="none" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" stroke="#94a3b8" stroke-width="1.5"/><path d="M2 8l10 6 10-6" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        <input id="email" type="email" placeholder="user@sgs.sa" autocomplete="email">
+      </div>
+    </div>
+
+    <div class="fld">
+      <label id="l-pw">كلمة المرور</label>
+      <div class="iw">
+        <span class="iico"><svg width="15" height="15" fill="none" viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="12" rx="3" stroke="#94a3b8" stroke-width="1.5"/><path d="M7 10V7a5 5 0 0 1 10 0v3" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        <input id="pw" type="password" placeholder="••••••••">
+        <button class="eye" type="button" onclick="togglePw()">
+          <svg id="eye-ico" width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" stroke="#94a3b8" stroke-width="1.5"/><circle cx="12" cy="12" r="3" stroke="#94a3b8" stroke-width="1.5"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <button class="sbmt" id="sbmt" onclick="doLogin()">
+      <div class="spin"></div>
+      <span id="sbmt-txt">دخول</span>
+    </button>
+  </div>
+
+  <div class="footer" id="footer">الشركة السعودية للخدمات الأرضية &copy; 2026</div>
+</div>
+
+<script>
+const API=window.location.origin;
+const T={
+  ar:{dir:'rtl',lp:'منظومة تقارير<br>مناولة الرحلات',lpsub:'الشركة السعودية للخدمات الأرضية',s1:'نوعا تقرير',s2:'مستويات',s3:'تشغيل',ttl:'تسجيل الدخول',sub:'أدخل بياناتك للوصول إلى منظومة التقارير',lem:'البريد الإلكتروني',lpw:'كلمة المرور',btn:'دخول',footer:'الشركة السعودية للخدمات الأرضية © 2026',errReq:'يرجى إدخال البريد وكلمة المرور',err401:'البريد أو كلمة المرور غير صحيحة',errSrv:'تعذّر الاتصال بالخادم'},
+  en:{dir:'ltr',lp:'Flight Handling<br>Reports System',lpsub:'Saudi Ground Services',s1:'Report Types',s2:'Levels',s3:'Operations',ttl:'Sign In',sub:'Enter your credentials to access the reports system',lem:'Email Address',lpw:'Password',btn:'Sign In',footer:'Saudi Ground Services Co. © 2026',errReq:'Please enter email and password',err401:'Invalid email or password',errSrv:'Cannot reach server'}
+};
+let lang=localStorage.getItem('lang')||'en';
+
+// Auto-redirect if already logged in
+// رمز سابق للترقية لا يحمل صلاحيات ⇒ يُطرح ويُطلب دخول جديد
+(function(){
+  const tok = localStorage.getItem('token');
+  if(!tok) return;
+  const perms = (localStorage.getItem('perms')||'').split(' ').filter(Boolean);
+  if(!perms.length){ localStorage.removeItem('token'); return; }
+  redirect(perms);
+})();
+
+function redirect(perms){
+  // أول صفحة يملك المستخدم صلاحيتها — لا افتراض على اسم الدور
+  const has = p => perms.includes(p);
+  if(has('reports.view'))          location.href='main.html';
+  else if(has('dashboard.view'))   location.href='dashboard.html';
+  else if(has('coordination.view'))location.href='coordination.html';
+  else if(has('reports.pending'))  location.href='pending.html';
+  else if(has('reports.approved')) location.href='approved.html';
+  else if(has('admin.users')||has('admin.roles')||has('admin.stations')) location.href='admin.html';
+  else location.href='main.html';
+}
+
+function setLang(l){
+  lang=l;localStorage.setItem('lang',l);
+  const t=T[l];
+  document.documentElement.dir=t.dir;document.documentElement.lang=l;
+  document.getElementById('lp-h1').innerHTML=t.lp;
+  document.getElementById('lp-p').textContent=t.lpsub;
+  document.getElementById('ttl').textContent=t.ttl;
+  document.getElementById('sub').textContent=t.sub;
+  document.getElementById('l-em').textContent=t.lem;
+  document.getElementById('l-pw').textContent=t.lpw;
+  document.getElementById('sbmt-txt').textContent=t.btn;
+  document.getElementById('footer').textContent=t.footer;
+  document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent.includes(l==='ar'?'العربية':'English')));
+  hideErr();
+}
+function togglePw(){const i=document.getElementById('pw');i.type=i.type==='password'?'text':'password';}
+function showErr(m){document.getElementById('errmsg').classList.add('show');document.getElementById('errtxt').textContent=m;document.getElementById('email').classList.add('err');document.getElementById('pw').classList.add('err');}
+function hideErr(){document.getElementById('errmsg').classList.remove('show');document.getElementById('email').classList.remove('err');document.getElementById('pw').classList.remove('err');}
+
+async function doLogin(){
+  const email=document.getElementById('email').value.trim();
+  const pw=document.getElementById('pw').value;
+  const t=T[lang];
+  hideErr();
+  if(!email||!pw){showErr(t.errReq);return;}
+  const btn=document.getElementById('sbmt');
+  btn.classList.add('loading');btn.disabled=true;
+  try{
+    const res=await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({username:email,password:pw})});
+    if(res.ok){
+      const d=await res.json();
+      localStorage.setItem('token',d.access_token);
+      localStorage.setItem('role',d.role);
+      localStorage.setItem('airport_name',d.airport_name||'');
+      localStorage.setItem('name',d.name);
+      localStorage.setItem('lang',lang);
+      // الصلاحيات هي مرجع القائمة الجانبية — لا اسم الدور
+      localStorage.setItem('perms',(d.permissions||[]).join(' '));
+      localStorage.setItem('role_name_ar',d.role_name_ar||'');
+      localStorage.setItem('role_name_en',d.role_name_en||'');
+      localStorage.setItem('role_color',d.role_color||'');
+      redirect(d.permissions||[]);
+    }else if(res.status===401){showErr(t.err401);}
+    else if(res.status===429||res.status===403){const e=await res.json().catch(()=>({}));showErr(e.detail||t.errSrv);}
+    else{showErr(t.errSrv);}
+  }catch{showErr(t.errSrv);}
+  finally{btn.classList.remove('loading');btn.disabled=false;}
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+setLang(lang);
+</script>
+</body>
+</html>
