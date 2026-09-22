@@ -10,7 +10,7 @@ The repository root is the `Decompiled Source` folder.
 | `lib/` | Yes | Third-party assemblies the project references (≈ 18 MB) |
 | `SQL Deploy/` | Yes | Database creation, schema, roles and first-admin scripts — **no data rows** |
 | `Doc/` | Yes | This documentation |
-| `run.bat`, `global.json`, `README.txt`, `.gitignore` | Yes | |
+| `run.bat`, `global.json`, `README.md`, `.gitignore` | Yes | `README.md` is the repository front page |
 | `SGSForms.Api/appsettings.Production.json` | **No** (ignored) | Real database password and JWT key of an environment |
 | `bin/`, `obj/`, `publish/` | **No** (ignored) | Build output |
 | `app/` (the original compiled package, outside this folder) | **No** | Keep as the rollback copy |
