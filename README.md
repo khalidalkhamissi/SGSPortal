@@ -1,157 +1,156 @@
-# منظومة تقارير مناولة الرحلات — SGS Flight Handling Reports
+**English** | [العربية](README.ar.md)
 
-نظام ويب يوثّق كيف تمت مناولة كل رحلة في المطار، من لحظة وصول الطائرة إلى إقلاعها، ويجمع توقيع شركة الطيران
-على التقرير بدل الورق، ثم يحوّل هذه التقارير إلى أرقام ولوحات متابعة يستفيد منها المسؤولون.
+# SGS Flight Handling Reports
 
----
-
-## الفكرة ببساطة
-
-تخيّل مشرف المناولة في مطار الرياض. هبطت رحلة، انتهت المناولة، وقبل أن يغادر يفتح النظام من جهازه ويسجّل ما حدث:
-أوقات الوصول والإقلاع، عدد الركاب في كل درجة، الحقائب بأنواعها، الكراسي المتحركة، البوابة، الحافلات، وأي تأخير
-وسببه. يحفظ التقرير مسودةً إن لم يكتمل، أو يرسله مباشرة.
-
-بعدها يأتي ممثل شركة الطيران، يراجع التقرير على نفس الجهاز، يقيّم الخدمة من نجمة إلى خمس نجوم، ويوقّع بإصبعه على
-الشاشة. إن وجد خطأ يعيد التقرير للمشرف مع سبب الإرجاع، فيصححه ويرسله من جديد.
-
-وفي الجهة الأخرى، ترى الإدارة كل هذا مجمّعاً: كم رحلة خُدمت، كم تقرير ينتظر الاعتماد، ما مستوى رضا شركات
-الطيران، وأي محطة أو شركة تستحق الانتباه — وتنزّل ما تريد إلى Excel أو PDF.
-
-```mermaid
-flowchart LR
-    A["المشرف يعبّئ التقرير"] --> B{"مكتمل؟"}
-    B -- لا --> C["مسودة"] --> A
-    B -- نعم --> D["بانتظار الموافقة"]
-    D --> E["ممثل الشركة يراجع"]
-    E -- يوافق ويوقّع --> F["معتمد ✔"]
-    E -- يعيده مع السبب --> G["مُعاد"] --> A
-    F --> H["لوحة التحكم · PDF · Excel"]
-```
+A web system that records how every flight was handled at the airport, from the moment the aircraft arrives until it
+departs. It collects the airline's sign-off on the report instead of on paper, then turns those reports into figures and
+dashboards that managers can act on.
 
 ---
 
-## ماذا يوجد في النظام؟
+## The idea in plain words
 
-**تقارير الوصول والمغادرة** — قلب النظام. نموذج لكل رحلة بتفاصيل الركاب والحقائب والصعود والتأخيرات وإنتاجية
-الموظفين، ويحسب الإجماليات تلقائياً.
+Picture a ground-handling supervisor at Riyadh airport. A flight has just landed and been handled. Before walking away,
+the supervisor opens the system on a tablet or PC and records what happened: arrival and departure times, passengers in
+each class, bags by type, wheelchairs, gate, buses, and any delay with its reason. An unfinished report is saved as a
+draft; a complete one is submitted straight away.
 
-**نماذج التنسيق (Coordination Sheet)** — جدول زمني لعملية الدوران الكاملة للطائرة: 24 نشاطاً من دخول الموقف
-حتى الدفع للخلف، مع الوقت الفعلي لبداية ونهاية كل نشاط، وسجل الحافلات، وحساب وقت GAIN.
+Next, the airline representative reviews the report on the same device, rates the service from one to five stars and
+signs on the screen with a finger. If something is wrong, they send the report back to the supervisor with a reason; the
+supervisor corrects it and submits it again.
 
-**اعتماد شركة الطيران** — تقييم بالنجوم وملاحظات وتوقيع إلكتروني يُحفظ مع التقرير ويظهر في ملف PDF.
+On the other side, management sees all of this in one place: how many flights were handled, how many reports are waiting
+for approval, how satisfied the airlines are, and which station or airline needs attention. Any of it can be downloaded
+as Excel or PDF.
 
-**القوائم** — بانتظار الموافقة، المسودات، المُعادة، المعتمدة، والتنسيق. في كل قائمة بحث فوري، وفلاتر بالتاريخ
-والمطار وشركة الطيران، و50 تقريراً في الصفحة مع تنقّل بين الصفحات.
-
-**لوحة التحكم** — مؤشرات وأرقام ورسوم بيانية: التقارير عبر الزمن، الوصول مقابل المغادرة، حسب المحطة، حسب شركة
-الطيران، وتوزيع رضا العملاء.
-
-**التصدير** — PDF لأي تقرير، وExcel مع نافذة تختار منها بالضبط ما تريد: النوع، الحالة، الفترة، الشركة، المطار،
-وترى عدد التقارير قبل التنزيل.
-
-**الإدارة** — المستخدمون والأدوار والمطارات. الأدوار مرنة: تنشئ دوراً جديداً وتختار صلاحياته من قائمة 19 صلاحية
-دون أي تعديل في الكود.
-
-**سجل التحديثات** — كل إنشاء وتعديل وإرسال واعتماد وإرجاع وحذف مسجّل باسم من قام به ومتى.
-
-والواجهة كلها **بالعربية والإنجليزية**، وتعمل على الكمبيوتر والجوال.
+<p align="center">
+  <img src="Doc/images/flow-en.png" alt="Report life cycle" width="560">
+</p>
 
 ---
 
-## من يستخدمه؟
+## What's in the system?
 
-| الدور | ماذا يفعل |
+**Arrival and departure reports.** The core of the system: one form per flight covering passengers, bags, boarding,
+delays and staff productivity, with totals calculated automatically.
+
+**Coordination sheets.** A timeline of the aircraft's full turnaround: 24 activities from on-block to push-back, the
+actual start and end time of each one, a bus log, and the GAIN time calculation.
+
+**Airline approval.** Star rating, remarks and an electronic signature, stored with the report and printed on its PDF.
+
+**Lists.** Pending approval, drafts, returned, approved and coordination. Each list has instant search, filters by date,
+airport and airline, and 50 reports per page with page navigation.
+
+**Dashboard.** Key figures and charts: reports over time, arrivals versus departures, by station, by airline, and the
+customer-satisfaction breakdown.
+
+**Export.** PDF for any report. For Excel, a dialog lets you choose exactly what you want (type, status, period,
+airline, airport) and shows how many reports match before you download.
+
+**Administration.** Users, roles and airports. Roles are flexible: create a new role and tick its permissions from a list
+of 19, with no code changes.
+
+**Activity log.** Every create, edit, submit, approve, return and delete is recorded with who did it and when.
+
+The whole interface is available in **Arabic and English** and works on desktop and mobile.
+
+---
+
+## Who uses it?
+
+| Role | What they do |
 |---|---|
-| **مشرف المناولة** | يعبّئ التقارير ونماذج التنسيق لمحطته، ويسلّم الجهاز لممثل الشركة للاعتماد |
-| **الإدارة** | تتابع التقارير المعتمدة والمعلّقة ولوحة التحكم في كل المحطات، وتصدّر البيانات |
-| **مدير النظام** | يدير المستخدمين والأدوار والمطارات، ويطّلع على سجل التحديثات |
+| **Handling supervisor** | Fills in reports and coordination sheets for their station, then hands the device to the airline representative for approval |
+| **Management** | Follows approved and pending reports and the dashboard across all stations, and exports data |
+| **System administrator** | Manages users, roles and airports, and reviews the activity log |
 
-كل مستخدم مرتبط بمحطته ولا يرى إلا بياناتها، إلا من أُعطي صلاحية "الاطلاع على كل المحطات".
+Each user belongs to a station and sees only that station's data, unless they are given the "view all stations"
+permission.
 
 ---
 
-## كيف يعمل من الداخل؟
+## How it works inside
 
-النظام تطبيق ويب من ثلاث طبقات، لكنه يُثبَّت كبرنامج واحد:
+The system is a three-tier web application, yet it installs as a single program:
 
-```mermaid
-flowchart LR
-    U["المتصفح<br/>صفحات HTML + JavaScript"] -- "طلبات JSON" --> S["برنامج SGS Forms<br/>ASP.NET Core 8"]
-    S -- "قراءة وحفظ" --> D[("قاعدة البيانات<br/>MySQL 8")]
-```
+<p align="center">
+  <img src="Doc/images/arch-en.png" alt="System components" width="900">
+</p>
 
-- **المتصفح** يعرض الصفحات ويرسل ما يكتبه المستخدم.
-- **البرنامج** هو العقل: يستقبل الطلبات، يتأكد أن المستخدم مسموح له بما يطلبه، يطبّق قواعد العمل (مثل: لا
-  يُعتمد تقرير إلا إذا كان مُرسلاً، ولا يُعدَّل تقرير معتمد)، ويولّد ملفات PDF وExcel. وهو نفسه من يقدّم صفحات
-  الواجهة، فلا حاجة لخادم ويب منفصل.
-- **قاعدة البيانات** تحفظ كل شيء: التقارير، الاعتمادات والتوقيعات، المستخدمين والأدوار، والسجل.
+- **The browser** shows the pages and sends what the user enters.
+- **The application** is the brain. It receives each request, checks the user is allowed to do it, applies the business
+  rules (for example, only a submitted report can be approved, and an approved report cannot be edited), and produces
+  the PDF and Excel files. It also serves the web pages itself, so no separate web server is needed.
+- **The database** stores everything: reports, approvals and signatures, users and roles, and the activity log.
 
-عند تسجيل الدخول يحصل المستخدم على "تذكرة" رقمية موقّعة (JWT) يرسلها مع كل طلب. والبرنامج لا يكتفي بالتذكرة، بل
-يتحقق في كل طلب أن الحساب ما زال فعّالاً وصلاحياته كما هي — فلو عُطّل موظف أو تغيّرت كلمة مروره أو سُحبت منه
-صلاحية، يسري ذلك فوراً.
+At sign-in the user receives a signed digital "ticket" (a JWT) that is sent with every request. The application does
+not simply trust the ticket: on every request it checks that the account is still active and its permissions are
+unchanged. If an employee is deactivated, changes their password or loses a permission, it takes effect immediately.
 
-### التقنيات المستخدمة ولماذا
+### Technologies and why they were chosen
 
-| الجزء | التقنية | لماذا |
+| Part | Technology | Why |
 |---|---|---|
-| الخادم | **ASP.NET Core 8** (C#) | سريع ومستقر ومدعوم من Microsoft، ويعمل كبرنامج مستقل على Windows |
-| قاعدة البيانات | **MySQL 8** | مجانية وموثوقة وتدعم العربية بالكامل (utf8mb4) |
-| الوصول للبيانات | **Entity Framework Core 8** + Pomelo | يُنشئ الجداول ويحدّثها تلقائياً عند التشغيل، ويحمي من حقن SQL |
-| الدخول والصلاحيات | **JWT** + تشفير كلمات المرور بـ **BCrypt** | لا تُخزَّن كلمة مرور واحدة كما هي، والصلاحيات تُفحص في كل طلب |
-| ملفات PDF | **PDFsharp / MigraDoc** | تقارير رسمية منسّقة مع الشعار والتوقيع |
-| ملفات Excel | **ClosedXML** | جداول جاهزة بفلاتر وتنسيق دون الحاجة لتثبيت Office على الخادم |
-| الواجهة | **HTML + CSS + JavaScript** بدون أطر عمل | خفيفة وسريعة ولا تحتاج بناء، مع **Chart.js** للرسوم |
+| Server | **ASP.NET Core 8** (C#) | Fast, stable, supported by Microsoft, and runs as a standalone program on Windows |
+| Database | **MySQL 8** | Free, reliable, with full Arabic support (utf8mb4) |
+| Data access | **Entity Framework Core 8** + Pomelo | Creates and updates tables automatically at start-up, and prevents SQL injection |
+| Sign-in and permissions | **JWT** + **BCrypt** password hashing | No password is ever stored as-is, and permissions are checked on every request |
+| PDF files | **PDFsharp / MigraDoc** | Formal, well-formatted reports with the logo and signature |
+| Excel files | **ClosedXML** | Ready-made sheets with filters and formatting, without installing Office on the server |
+| Interface | Plain **HTML + CSS + JavaScript**, no framework | Light, fast and needs no build step; **Chart.js** draws the charts |
 
-### الأمان باختصار
-- كلمات المرور مشفّرة ولا يمكن استرجاعها، و8 أحرف على الأقل.
-- حد لمحاولات الدخول (10 في الدقيقة) لمنع التخمين، وتُسجَّل المحاولات الفاشلة.
-- كل نص يدخله المستخدم يُعرض كنص فقط، فلا يمكن حقن أكواد في الصفحات.
-- المستخدم لا يرى إلا محطته، ولا ينفّذ إلا ما تسمح به صلاحياته — والفحص في الخادم لا في الواجهة فقط.
-- لا يستطيع مدير المستخدمين ترقية نفسه أو غيره إلى صلاحيات أعلى من صلاحياته.
-- الأسرار (كلمة مرور القاعدة ومفتاح التذاكر) خارج الكود ولا تُرفع إلى GitHub.
+### Security at a glance
+- Passwords are hashed and cannot be recovered, and must be at least 8 characters.
+- Sign-in attempts are limited (10 per minute) to stop password guessing, and failed attempts are logged.
+- Everything a user types is displayed as plain text, so no code can be injected into the pages.
+- Users see only their station and can do only what their permissions allow. These checks happen on the server, not
+  just in the interface.
+- A user administrator cannot raise their own permissions, or anyone else's, above their own.
+- Secrets (the database password and the ticket-signing key) live outside the code and are never uploaded to GitHub.
 
 ---
 
-## ماذا تحتاج لتشغيله؟
+## What you need to run it
 
-**للتشغيل:**
-- جهاز أو خادم **Windows** (Windows Server 2019 أو أحدث للإنتاج، أو Windows 10/11 للتجربة).
+**To run it:**
+- A **Windows** PC or server (Windows Server 2019 or later for production, Windows 10/11 for testing).
 - **MySQL 8.0**.
-- **.NET 8 SDK** إذا كنت ستشغّله من الكود مباشرة (كما في هذا المستودع). أما النسخة المنشورة فلا تحتاج أي تثبيت.
+- **.NET 8 SDK** if you run it from source, as in this repository. A published build needs nothing installed.
 
-**حجم الخادم:** لفريق حتى 100 مستخدم يكفي خادم واحد يضم البرنامج وقاعدة البيانات، بـ 4 أنوية و16 جيجا ذاكرة.
-في اختبار الضغط تحمّل جهاز عادي (i5 و32 جيجا) مئات المستخدمين في وقت واحد دون أخطاء. التفاصيل في
-[متطلبات الخوادم](Doc/09-Server-Requirements.md).
+**Server size:** for a team of up to 100 users, a single server holding both the application and the database is
+enough, with 4 CPU cores and 16 GB of memory. In load testing, an ordinary PC (Core i5, 32 GB) handled hundreds of
+simultaneous users with no errors. Details are in [Server Requirements](Doc/09-Server-Requirements.md).
 
-**المتصفح:** أي متصفح حديث — Chrome أو Edge أو Safari أو Firefox.
+**Browser:** any modern browser: Chrome, Edge, Safari or Firefox.
 
 ---
 
-## التشغيل خطوة بخطوة
+## Getting started, step by step
 
-**1. جهّز قاعدة البيانات** — من مجلد `SQL Deploy`، وبحساب root في MySQL، شغّل بالترتيب:
+**1. Prepare the database.** From the `SQL Deploy` folder, as the MySQL root user, run these in order:
 
-| الملف | ماذا يفعل |
+| File | What it does |
 |---|---|
-| `00_create_database.sql` | ينشئ القاعدة وحساباً خاصاً بالبرنامج (`sgs_app`) — غيّر كلمة المرور فيه أولاً |
-| `01_schema.sql` | ينشئ الجداول |
-| `02_seed.sql` | ينشئ الأدوار والصلاحيات |
-| `02_seed_production.sql` | ينشئ المطارات وأول حساب مدير — ضع بريدك وبصمة كلمة مرور جديدة (الشرح في `DEPLOYMENT_GUIDE.md`) |
+| `00_create_database.sql` | Creates the database and a dedicated account for the application (`sgs_app`). Change its password first |
+| `01_schema.sql` | Creates the tables |
+| `02_seed.sql` | Creates the roles and permissions |
+| `02_seed_production.sql` | Creates the airports and the first administrator account. Put in your e-mail and a new password hash (explained in `DEPLOYMENT_GUIDE.md`) |
 
-**2. أضف الإعدادات السرية** — في مجلد `SGSForms.Api` انسخ `appsettings.Production.example.json` باسم
-`appsettings.Production.json` وعبّئه:
-- `ConnectionStrings:Default` — الاتصال بقاعدة البيانات بحساب `sgs_app`.
-- `Jwt:Key` — نص عشوائي طويل (32 حرفاً على الأقل). لتوليده في PowerShell:
+**2. Add the secret settings.** In the `SGSForms.Api` folder, copy `appsettings.Production.example.json` to
+`appsettings.Production.json` and fill in:
+- `ConnectionStrings:Default`: the database connection, using the `sgs_app` account.
+- `Jwt:Key`: a long random string (at least 32 characters). To generate one in PowerShell:
   `[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))`
 
-هذا الملف لا يُرفع إلى GitHub أبداً، ولكل جهاز نسخته الخاصة.
+This file is never uploaded to GitHub, and each machine keeps its own copy.
 
-**3. شغّل** — انقر مرتين على `run.bat`، ثم افتح **http://localhost:5200**.
+**3. Run it.** Double-click `run.bat`, then open **http://localhost:5200**.
 
-> للتجربة فقط: إن أردت حسابات تجريبية جاهزة على قاعدة فارغة، أضف الإعداد `Seed__DemoUsers=true`. لا تستخدمه في
-> الإنتاج أبداً لأن كلمات مرورها معروفة.
+> For testing only: to get ready-made demo accounts on an empty database, add the setting `Seed__DemoUsers=true`.
+> Never use it in production, because the demo passwords are publicly known.
 
-**للنشر على خادم** — أنشئ نسخة جاهزة لا تحتاج .NET:
+**To deploy to a server,** build a self-contained copy that needs no .NET installed:
 ```bash
 cd SGSForms.Api
 dotnet publish -c Release -r win-x64 --self-contained true -o ../publish
@@ -159,44 +158,45 @@ dotnet publish -c Release -r win-x64 --self-contained true -o ../publish
 
 ---
 
-## الإعدادات
+## Settings
 
-| الإعداد | أين | الوصف |
+| Setting | Where | Description |
 |---|---|---|
-| `ConnectionStrings:Default` | `appsettings.Production.json` أو متغير البيئة `ConnectionStrings__Default` | الاتصال بقاعدة البيانات |
-| `Jwt:Key` | `appsettings.Production.json` أو `Jwt__Key` | مفتاح توقيع تذاكر الدخول — إلزامي، والبرنامج لا يعمل بدونه |
-| `Urls` | `appsettings.json` | العنوان والمنفذ (الافتراضي `http://localhost:5200`) |
-| `Seed:DemoUsers` | `appsettings.json` | حسابات تجريبية — `false` دائماً في الإنتاج |
-| `ReverseProxy:KnownProxies` | `appsettings.json` | عنوان IIS أو nginx إن كان البرنامج خلف بروكسي |
-| `AllowedHosts` | `appsettings.json` | اسم النطاق الفعلي في الإنتاج |
+| `ConnectionStrings:Default` | `appsettings.Production.json` or the environment variable `ConnectionStrings__Default` | Database connection |
+| `Jwt:Key` | `appsettings.Production.json` or `Jwt__Key` | Key that signs the sign-in tickets. Required; the application will not start without it |
+| `Urls` | `appsettings.json` | Address and port (default `http://localhost:5200`) |
+| `Seed:DemoUsers` | `appsettings.json` | Demo accounts. Always `false` in production |
+| `ReverseProxy:KnownProxies` | `appsettings.json` | Address of IIS or nginx when the application runs behind a reverse proxy |
+| `AllowedHosts` | `appsettings.json` | The real host name in production |
 
 ---
 
-## محتويات المستودع
+## What's in this repository
 
 ```
-SGSForms.Api/          البرنامج
-  ├── Program.cs         نقطة البداية: الأمان والإعدادات
-  ├── SGSForms/Api/      الكود: Controllers · Services · Entities · Auth · Migrations
-  └── Forms Source/      الواجهة: 15 صفحة + nav.js
-lib/                   المكتبات التي يعتمد عليها البرنامج
-SQL Deploy/            سكربتات قاعدة البيانات ودليل التثبيت
-Doc/                   التوثيق الفني الكامل (Markdown + Word)
-run.bat                تشغيل بنقرة
+SGSForms.Api/          The application
+  ├── Program.cs         Entry point: security and configuration
+  ├── SGSForms/Api/      Code: Controllers · Services · Entities · Auth · Migrations
+  └── Forms Source/      Interface: 15 pages + nav.js
+lib/                   Libraries the application depends on
+SQL Deploy/            Database scripts and installation guide
+Doc/                   Full technical documentation (Markdown + Word)
+run.bat                One-click start
 ```
 
 ---
 
-## التوثيق الفني
+## Technical documentation
 
-كل التفاصيل في مجلد [Doc](Doc/README.md): التصميم العام والتفصيلي، مخططات البنية والشبكة وتدفق البيانات، تصميم
-قاعدة البيانات، متطلبات الخوادم، نموذج اختبار القبول (UAT)، وتقرير مراجعة الكود.
+Everything is in the [Doc](Doc/README.md) folder: high-level and low-level design, architecture, network and data-flow
+diagrams, the database design, server requirements, the user acceptance test (UAT) form, and the code review report.
 
 ---
 
-## ملاحظات
+## Notes
 
-- هذا الكود مُسترجع من النسخة المبنية للبرنامج ثم رُوجع سطراً بسطر وأُصلحت أخطاؤه وثغراته — التفاصيل في
-  [تقرير مراجعة الكود](Doc/12-Code-Review-Report.md).
-- قبل الاستخدام الفعلي: فعّل HTTPS، واستخدم حساب `sgs_app` بدل root، وشغّل البرنامج كخدمة دائمة.
-- المستودع خاص ويحمل هوية SGS — لا تجعله عاماً.
+- This code was recovered from the application's compiled build, then reviewed line by line, with its bugs and security
+  gaps fixed. Details are in the [Code Review Report](Doc/12-Code-Review-Report.md).
+- Before going live: enable HTTPS, use the `sgs_app` account instead of root, and run the application as a permanent
+  service.
+- This repository is private and carries the SGS identity. Do not make it public.
