@@ -15,10 +15,3 @@
 | 11 | [Source Code on GitHub](11-Source-Code-GitHub.md) | Repository contents, secrets handling, upload steps |
 | 12 | [Code Review Report](12-Code-Review-Report.md) | Findings, fixes and open items |
 
-**System:** SGS Flight Handling Reports ("SGS Forms") — version recovered from the deployed build and hardened, September 2026.
-
-**Word versions:** the `Word/` folder holds each document as a formatted `.docx` (cover page, page numbers, diagrams as images).
-They are generated from these Markdown files — edit the Markdown and regenerate rather than editing both.
-
-**Conventions:** diagrams are written in Mermaid and render directly on GitHub (and in VS Code with a Mermaid extension).
-Figures quoted as "measured" come from tests run on the development machine described in document 09.
